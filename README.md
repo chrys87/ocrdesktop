@@ -9,5 +9,5 @@ tesseract
 tesseract-lang-<yourLanguageCode>
 python3-pillow
 orca
-python-tesserwrap
+python-tesserwrap (https://pypi.python.org/pypi/tesserwrap)
 libwnck3
