@@ -1,0 +1,10 @@
+0.9.30
+- different types of macros
+  c = command ( for now wie have the delay command)
+	"c,delay,seconds" 
+  m = mouse (fully functional)
+	"m,xpos,ypos,TypeOfClick"
+  k = keyboard not implemented yet
+- use pyatspi directly
+- pressing cancle in macro recorder provides a endles loop
+- some clearups
