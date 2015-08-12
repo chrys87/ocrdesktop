@@ -582,9 +582,9 @@ class OCRMacroManager:
 					time.sleep(float(line[2]))
 
 			if line[0] == 'k':
-				pass
+				self._doKeyboardMacroStep(int(line[1]), int(line[2]), line[3])
 			if line[0] == 'm':
-				self._doMacroStep(int(line[1]), int(line[2]), line[3])
+				self._doMouseMacroStep(int(line[1]), int(line[2]), line[3])
 		macroFile.close()
 		self._MacroFinished = True
 		
@@ -594,12 +594,18 @@ class OCRMacroManager:
 	def _deleteMacro(self):
 		os.remove(self._macroFile)
 
-	def _doMacroStep(self,xpos, ypos, mouseEvent, posRelation = "abs"):
+	def _doKeyboardMacroStep(self,xpos, ypos, mouseEvent, posRelation = "abs"):
+		pass
+
+	def _doMouseMacroStep(self,xpos, ypos, mouseEvent, posRelation = "abs"):
 		pyatspi.Registry.generateMouseEvent(xpos,ypos,posRelation)
 		if (mouseEvent != 'None'):
 			pyatspi.Registry.generateMouseEvent(xpos,ypos,mouseEvent)
 	def _threadDoClick(self):
 		self._RunMacro()
+
+	def _writeKeyboardToMacro(self, Xpos_p, Ypos_p, MouseEvent_p):
+		pass
 
 	def _writeMouseToMacro(self, Xpos_p, Ypos_p, MouseEvent_p):
 		macroFile = open(self._macroFile, "a")
