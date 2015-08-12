@@ -6,7 +6,7 @@
 # yaourt python-tesserwrap
 # 
 # -*- coding: utf-8 -*-
-# version 0.9.28
+# version 0.9.30
 
 #Python Utils
 import os, sys, getopt, locale, time, re, _thread
