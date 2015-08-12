@@ -19,8 +19,38 @@ from tesserwrap import tesseract
 from gi.repository import Gtk, Gdk, GObject, Wnck
 
 
-# Orca
-import orca.eventsynthesizer
+# AT-SPI
+import pyatspi
+
+
+KEY_CODE = {
+    '1': 10, '2': 11, '3': 12, '4': 13, '5': 14, '6': 15,
+    '7': 16, '8': 17, '9': 18, '0': 19, 'dash': 20, '=': 21,
+    'q': 24, 'w': 25, 'e': 26, 'r': 27, 't': 28, 'y': 29,
+    'u': 30, 'i': 31, 'o': 32, 'p': 33, '[': 34, ']': 35,
+    'a': 38, 's': 39, 'd': 40, 'f': 41, 'g': 42, 'h': 43,
+    'j': 44, 'k': 45, 'l': 46, ';': 47, 'z': 52, 'x': 53,
+    'c': 54, 'v': 55, 'b': 56, 'n': 57, 'm': 58, ',': 59,
+    '.': 60, '/': 61, '\'': 48, '\\': 51, '`': 49, '|': 52,
+    'esc': 9, 'back': 22, 'enter': 36, 'space': 65, 'tab': 23,
+    'ins': 118, 'del': 119, 'home': 110, 'end': 115, 'pgup': 112,
+    'pgdown': 117, 'up': 111, 'left': 113, 'right': 114, 'down': 116,
+    'f1': 67, 'f2': 68, 'f3': 69, 'f4': 70,
+    'f5': 71, 'f6': 72, 'f7': 73, 'f8': 74,
+    'f9': 75, 'f10': 76, 'f11': 95, 'f12': 96,
+    'alt': 64,
+    'alt_r': 105,
+    'ctrl': 37,
+    'ctrl_r': 108,
+    'shift': 50,
+    'shift_r': 62,
+    'super': 133,
+    'caps': 66,
+    'menu': 135,
+    'pause': 127,
+    'num_lock': 77,
+    'scroll_lock': 78,
+    }
 
 
 # here the class
@@ -364,20 +394,20 @@ class OCRNavigation(Gtk.Window):
 
 	def _threadrouteToPoint(self, xpos=1,ypos=1,delay=0.8, posRelation = "abs"):
 		if self._saveToMacro:
-			self._macro._writeToMacro(xpos,ypos,'None')
+			self._macro._writeMouseToMacro(xpos,ypos,'None')
 		else:
 			time.sleep(delay)
-			orca.eventsynthesizer.routeToPoint(xpos,ypos,posRelation)
+			pyatspi.Registry.generateMouseEvent(xpos,ypos,posRelation)
 		self._cancel()
 		
 
 	def _threadDoClick(self, xpos=1,ypos=1,mouseEvent='b1c',delay=0.8, posRelation = "abs"):
 		if self._saveToMacro:
-			self._macro._writeToMacro(xpos,ypos,mouseEvent)
+			self._macro._writeMouseToMacro(xpos,ypos,mouseEvent)
 		else:
 			time.sleep(delay)
-			orca.eventsynthesizer.routeToPoint(xpos,ypos,posRelation)
-			orca.eventsynthesizer.generateMouseEvent(xpos,ypos,mouseEvent)
+			pyatspi.Registry.generateMouseEvent(xpos,ypos,posRelation)
+			pyatspi.Registry.generateMouseEvent(xpos,ypos,mouseEvent)
 		self._cancel()
 
 	def _setTextToClipboard(self, text_p):
@@ -407,9 +437,10 @@ class OCRScreenReader():
 		self._macroFile = '/tmp/MyOCRMacro.osm'
 		self._showHelp = False
 		self._setCommandLineOptions()
-		
+
 		if self._showHelp:
 			return
+
 		#MACRO
 		self._macro = OCRMacroManager()
 		self._macro._setMcroFile(self._macroFile)
@@ -418,21 +449,23 @@ class OCRScreenReader():
 		else:
 			if self._macro._macroExists():
 				self._macro._RunMacro()
+
 		#NAVIGATION
 		Navigation = OCRNavigation()
-		
+
 		Navigation._setSendToClipboard(self._sendToClipboard)
 		Navigation._setScreenShotMode(self._screenShotMode)
 		Navigation._setHideGui(self._hideGui)
 		Navigation._setMacro(self._macro)
-		
+
 		while not self._macro.getMacroFinished() and self._macro._macroExists():
 			pass
 		time.sleep(0.3)
 		if Navigation._screenShot():
 			Navigation._ocrImage()
 			if not self._hideGui:
-				Navigation.showGUI()	
+				Navigation.showGUI()
+
 		#FUNCTIONS
 	def _setCommandLineOptions(self):
 		try:
@@ -454,7 +487,7 @@ class OCRScreenReader():
 					self._printHelp()
 		except:
 					self._printHelp()
-					
+
 	def _printHelp(self):
 		print("ocrdesktop -h -n -d -c -m")
 		print("-h		Print help with start")
@@ -530,6 +563,7 @@ class OCRMacroManager:
 		if self._gui != None:
 			self._gui.hide()
 		Gtk.main_quit()
+		self._MacroFinished = True
 
 	def _macroExists(self):
 		return (os.path.exists(self._macroFile) and os.path.isfile(self._macroFile))
@@ -541,8 +575,16 @@ class OCRMacroManager:
 			if not line:
 				break
 			line = line.split(',')
-			time.sleep(0.9)
-			self._doMacroStep(int(line[0]), int(line[1]), line[2])	
+
+			# doing stuff
+			if line[0] == 'c':
+				if line[1] == 'delay':
+					time.sleep(float(line[2]))
+
+			if line[0] == 'k':
+				pass
+			if line[0] == 'm':
+				self._doMacroStep(int(line[1]), int(line[2]), line[3])
 		macroFile.close()
 		self._MacroFinished = True
 		
@@ -553,16 +595,16 @@ class OCRMacroManager:
 		os.remove(self._macroFile)
 
 	def _doMacroStep(self,xpos, ypos, mouseEvent, posRelation = "abs"):
-		orca.eventsynthesizer.routeToPoint(xpos,ypos)
+		pyatspi.Registry.generateMouseEvent(xpos,ypos,posRelation)
 		if (mouseEvent != 'None'):
-			orca.eventsynthesizer.generateMouseEvent(xpos,ypos,mouseEvent)
-
+			pyatspi.Registry.generateMouseEvent(xpos,ypos,mouseEvent)
 	def _threadDoClick(self):
 		self._RunMacro()
 
-	def _writeToMacro(self, Xpos_p, Ypos_p, MouseEvent_p):
+	def _writeMouseToMacro(self, Xpos_p, Ypos_p, MouseEvent_p):
 		macroFile = open(self._macroFile, "a")
-		macroFile.write(str(Xpos_p) + ',' + str(Ypos_p)  + ',' + MouseEvent_p + '\n')		
+		macroFile.write('c,' + 'delay' + ',0.9\n')
+		macroFile.write('m,' + str(Xpos_p) + ',' + str(Ypos_p)  + ',' + MouseEvent_p + '\n')
 		macroFile.close()
 
 	def showGUI(self):
