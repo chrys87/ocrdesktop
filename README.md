@@ -8,6 +8,6 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 tesseract
 tesseract-lang-<yourLanguageCode>
 python3-pillow
-orca
+python-atspi
 python-tesserwrap (https://pypi.python.org/pypi/tesserwrap)
 libwnck3
