@@ -1,3 +1,33 @@
-- change fontsize
+Features ready for implementation:
+- make fontsize/ fontfamiliy changeable
+  See here http://askubuntu.com/questions/181850/change-font-programmatically-for-gtk3-textview-quickly-widgets-texteditor
 - allow sending keyboard shortcuts
+  See https://people.gnome.org/~parente/pyatspi/doc/pyatspi.registry.Registry-class.html#generateKeyboardEvent
 - allow keyboard shortcuts in macro recorder
+  See https://people.gnome.org/~parente/pyatspi/doc/pyatspi.registry.Registry-class.html#registerKeystrokeListener
+- use css for more visible selections
+  See http://wolfvollprecht.de/blog/gtk-python-and-css-are-an-awesome-combo/
+- "Save As" for macros via filechooser
+- UI redesign/ F10 Menü, contextmenu, remove the buch of buttons
+- "Entry Dialog" for selecting Options OCR the window or just an area?
+- Make settings (like fontsize) saveable in gsettings or flatfile
+  See http://www.micahcarrick.com/gsettings-python-gnome-3.html
+
+
+Needs experimenting or info
+
+- it is possible to identify a open menu? so we could set a OCR area insteed screenshotting the window. 
+this will leed to more readable results in menus. if not maybe we could  range pixels left/right of the cursor and let the user select via entry window
+check the common Menue sizes
+
+- do we know object is have under the cursor? No Chance via API but:
+  We could guess! :)
+  I think we could not be shure here but we could expect some things that happens verry often.
+  Hopfully this list will raise and it gives usefull information.
+  for example:
+  First line is window title
+  second line is window menu
+  X end of the first or second line is close button
+  D end of the first or second line is fullscreenbutton
+  QT is a Selected checkbox
+  last line is Statusbar
