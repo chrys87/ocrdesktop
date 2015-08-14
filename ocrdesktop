@@ -1,12 +1,18 @@
 #!/bin/python3
-# Requiere: python3, tesserwrap >=0.1.6, GTK3, pygtk, tesseract ,PIL , orca >=3.14, tesseract-data-<yourlanguage>
+# Requiere: python3, tesserwrap >=0.1.6, GTK3, pygtk, tesseract ,PIL , python-atspi, tesseract-data-<yourlanguage>
 # Install:
 # ARCH Linux
-# pacman -S  python-pillow tesseract tesseract-data-deu tesseract-data-eng orca python pygtk 
+# pacman -S  python-pillow tesseract tesseract-data-deu tesseract-data-eng python-atspi python pygtk 
 # yaourt python-tesserwrap
 # 
 # -*- coding: utf-8 -*-
-# version 0.9.30
+
+
+"""OCRdesktop"""
+
+__version__   = "0.9.30"
+__copyright__ = "Copyright (c) 2015 Chrys"
+__license__   = "LGPL"
 
 #Python Utils
 import os, sys, getopt, locale, time, re, _thread
@@ -15,7 +21,13 @@ from PIL import Image
 #tesseract
 from tesserwrap import tesseract
 
-#GTK/GDK/Wnck
+#gi
+import gi
+
+#GTK/GDK/Wnck/GObject
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+gi.require_version("Wnck", "3.0")
 from gi.repository import Gtk, Gdk, GObject, Wnck
 
 

@@ -8,3 +8,4 @@
 - use pyatspi directly
 - pressing cancle in macro recorder provides a endles loop
 - some clearups
+- check for correct gi lib versions on start
