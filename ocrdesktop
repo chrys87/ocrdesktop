@@ -28,6 +28,7 @@ from gi.repository import Gtk, Gdk, GObject, Wnck
 # AT-SPI
 import pyatspi
 
+Debug_g = False
 
 KEY_CODE = {
     '1': 10, '2': 11, '3': 12, '4': 13, '5': 14, '6': 15,
@@ -61,7 +62,8 @@ KEY_CODE = {
 
 # here the class
 class OCRNavigation(Gtk.Window):
-	def __init__(self):
+	def __init__(self, debug_p = False):
+		self._debug = debug_p
 		self._tree = None
 		self._textbox = None
 		self._textbuffer = None
@@ -110,9 +112,14 @@ class OCRNavigation(Gtk.Window):
 		pixBuff = Gdk.pixbuf_get_from_window(CurrDesktop, 0, 0, CurrDesktop.get_width(), CurrDesktop.get_height())
 		if (pixBuff != None):
 			self._img = self.pixbuf2image(pixBuff)
+			if self._debug: # Debug code
+				self._img.save("/tmp/ocrScreenshot.png") 
+				print("save screenshot:/tmp/ocrScreenshot.png") 
 			self._scaleImg()
 			return True
 		else:
+			if self._debug: # Debug code
+				print("Could not take screenshot") 
 			return False
 
 	def _screenShotWindow(self): #Mode=0 Desktop  Mode=1 CurrWindow
@@ -123,13 +130,19 @@ class OCRNavigation(Gtk.Window):
 		currWnckWindow = currWnckScreen.get_active_window()
 		self._offsetXpos, self._offsetYpos, wnckWidth, wnckHeight = Wnck.Window.get_geometry(currWnckWindow)
 		pixBuff = Gdk.pixbuf_get_from_window(gdkCurrDesktop, self._offsetXpos, self._offsetYpos , wnckWidth, wnckHeight)
-		#pixBuff.savev('screenshot.bmp', 'bmp', [], []) # Debug code
+		if self._debug:
+			pixBuff.savev('/tmp/ocrpixBuff.bmp', 'bmp', [], []) # Debug code
+			print("save pixBuff /tmp/ocrpixBuff.bmp")
 		if (pixBuff != None):
 			self._img = self.pixbuf2image(pixBuff)
-			#self._img = Image.open('screenshot-wurml.png') # Debug code
+			if self._debug: # Debug code
+				self._img.save("/tmp/ocrScreenshot.png") 
+				print("save screenshot:/tmp/ocrScreenshot.png") 
 			self._scaleImg()
 			return True
 		else:
+			if self._debug: # Debug code
+				print("Could not take screenshot") 
 			return False
 
 	def pixbuf2image(self, pix):
@@ -149,6 +162,10 @@ class OCRNavigation(Gtk.Window):
 		width_screen =  width_screen * self._scaleFactor
 		height_screen = height_screen * self._scaleFactor
 		self._img = self._img.resize( (width_screen, height_screen), Image.BICUBIC)
+		if self._debug: # Debug code
+			self._img.save("/tmp/ocrScreenshotScaled.png")
+			print("save scaled screenshot:/tmp/ocrScreenshotScaled.png")
+
 
 	def _screenShot(self):
 		Ok = False
@@ -156,7 +173,7 @@ class OCRNavigation(Gtk.Window):
 			Ok = self._screenShotWindow()
 		elif self._screenShotMode == 1:
 			Ok = self._screenShotDesktop()
-		#self._img.save("/home/chrys/Projekte/OCRmyDesktop/bla.png") # Debug code
+			
 		return Ok
 				
 	def _ocrImage(self):
@@ -359,6 +376,8 @@ class OCRNavigation(Gtk.Window):
 		entries_for_keycode = keymap.get_entries_for_keycode(keycode)
 		entries = entries_for_keycode[-1]
 		eventString = Gdk.keyval_name(entries[0])
+		if self._debug:
+			print(eventString)
 		if eventString == 'Escape':
 			Gtk.main_quit()
 		if eventString == 'Return':
@@ -442,13 +461,14 @@ class OCRScreenReader():
 		self._screenShotMode = 0 # 0 = Window; 1 = Desktop
 		self._macroFile = '/tmp/MyOCRMacro.osm'
 		self._showHelp = False
+		self._debug = False
 		self._setCommandLineOptions()
 
 		if self._showHelp:
 			return
 
 		#MACRO
-		self._macro = OCRMacroManager()
+		self._macro = OCRMacroManager(self._debug)
 		self._macro._setMcroFile(self._macroFile)
 		if not self._hideGui:
 			self._macro.showGUI()
@@ -457,7 +477,7 @@ class OCRScreenReader():
 				self._macro._RunMacro()
 
 		#NAVIGATION
-		Navigation = OCRNavigation()
+		Navigation = OCRNavigation(self._debug)
 
 		Navigation._setSendToClipboard(self._sendToClipboard)
 		Navigation._setScreenShotMode(self._screenShotMode)
@@ -475,13 +495,16 @@ class OCRScreenReader():
 		#FUNCTIONS
 	def _setCommandLineOptions(self):
 		try:
-			myopts, args = getopt.getopt(sys.argv[1:],"hndcm:")
+			myopts, args = getopt.getopt(sys.argv[1:],"hpndcm:")
 			###############################
 			# o == option
 			# a == argument passed to the o
 			###############################
 			for o, a in myopts:
-				if o == '-d':
+				if o == '-p':
+					self._debug = True
+					print('Debugmode ON')
+				elif o == '-d':
 					self._screenShotMode = 1
 				elif o == '-c':
 					self._sendToClipboard = True
@@ -495,9 +518,10 @@ class OCRScreenReader():
 					self._printHelp()
 
 	def _printHelp(self):
-		print("ocrdesktop -h -n -d -c -m")
+		print("ocrdesktop -h -p -n -d -c -m")
 		print("-h		Print help with start")
 		print("-n		hide GUI  (use with -c or -m")
+		print("-p		print debug messages")
 		print("-d		OCR the Destkop")
 		print("-c		Send to Clipboard")
 		print("-m <MacroFile>	run a macro before starting.")	
@@ -506,7 +530,7 @@ class OCRScreenReader():
 
 class OCRMacroManager:
 
-	def __init__(self):
+	def __init__(self,debug_p = False):
 		self._cancelButton = None
 		self._runMacroButton = None
 		self._deleteMacroButton = None
@@ -515,9 +539,13 @@ class OCRMacroManager:
 		self._macroFile ='/tmp/MyOCRMacro.osm'
 		self._gui = None
 		self._MacroFinished = False
+		self._debug = debug_p
 		
 	def _setMcroFile(self, macroFile_p):
 		self._macroFile = macroFile_p
+		
+	def _setDebug(self, debug_p):
+		self._debug = debug_p
 
 	def _createMacroConfirm(self):
 
@@ -636,6 +664,8 @@ class OCRMacroManager:
 		entries_for_keycode = keymap.get_entries_for_keycode(keycode)
 		entries = entries_for_keycode[-1]
 		eventString = Gdk.keyval_name(entries[0])
+		if self._debug:
+			print(eventString)
 		if eventString == 'Escape':
 			self._cancel()
 #		if eventString == 'Return':

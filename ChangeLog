@@ -9,3 +9,4 @@
 - pressing cancle in macro recorder provides a endles loop
 - some clearups
 - check for correct gi lib versions on start
+- new commandline option -p for debugging
