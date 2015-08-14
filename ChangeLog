@@ -10,3 +10,4 @@
 - some clearups
 - check for correct gi lib versions on start
 - new commandline option -p for debugging
+- new application Menu (F10) _OCRdesktop, _Interact, _Macro, _Help

@@ -211,7 +211,6 @@ class OCRNavigation(Gtk.Window):
 	def _createNavListDialog(self):
 		Gtk.Window.__init__(self, title="OCR")
 		self.set_default_size(700,700)
-		columnHeaders = ['OCR Text','X Position','Y Position','Confidence']
 
 		self._scrolledWindowText = Gtk.ScrolledWindow()
 
@@ -228,20 +227,31 @@ class OCRNavigation(Gtk.Window):
 		self.menubar = Gtk.MenuBar()
 
 		self.menu_ocrdesktop = Gtk.Menu()
-		self.item_toggleview = Gtk.MenuItem("Toggle View")
-		self.item_close = Gtk.MenuItem("Close")
+		self.item_toggleview = Gtk.MenuItem("_Toggle View")
+		self.item_toggleview.set_use_underline(True)
+		self.item_font = Gtk.MenuItem("_Font")
+		self.item_font.set_use_underline(True)
+		self.item_close = Gtk.MenuItem("_Close")
+		self.item_close.set_use_underline(True)
 		self.menu_ocrdesktop.append(self.item_toggleview)
+		self.menu_ocrdesktop.append(self.item_font)
 		self.menu_ocrdesktop.append(self.item_close)
 		self.item_toggleview.connect("activate", self._toggleView)
 		self.item_close.connect("activate", Gtk.main_quit)
 		
 		self.menu_interact = Gtk.Menu()
-		self.item_preclick = Gtk.MenuItem("Preclick")
-		self.item_leftclick = Gtk.MenuItem("Left Click")
-		self.item_doubletclick = Gtk.MenuItem("Double Click")
-		self.item_rightclick = Gtk.MenuItem("Right Click")
-		self.item_middleclick = Gtk.MenuItem("Middle Click")
-		self.item_routeto = Gtk.MenuItem("Route To")
+		self.item_preclick = Gtk.MenuItem("_Preclick")
+		self.item_preclick.set_use_underline(True)
+		self.item_leftclick = Gtk.MenuItem("_Left Click")
+		self.item_leftclick.set_use_underline(True)
+		self.item_doubletclick = Gtk.MenuItem("_Double Click")
+		self.item_doubletclick.set_use_underline(True)
+		self.item_rightclick = Gtk.MenuItem("_Right Click")
+		self.item_rightclick.set_use_underline(True)
+		self.item_middleclick = Gtk.MenuItem("_Middle Click")
+		self.item_middleclick.set_use_underline(True)
+		self.item_routeto = Gtk.MenuItem("Route _To")
+		self.item_routeto.set_use_underline(True)
 		self.menu_interact.append(self.item_preclick)
 		self.menu_interact.append(self.item_leftclick)
 		self.menu_interact.append(self.item_doubletclick)
@@ -256,21 +266,32 @@ class OCRNavigation(Gtk.Window):
 		self.item_routeto.connect("activate", self._routeToPoint)
 		
 		self.menu_macro = Gtk.Menu()
-		self.item_save = Gtk.MenuItem("Save")
-		self.item_load = Gtk.MenuItem("Load")
-		self.item_run = Gtk.MenuItem("Run")
+		self.item_save = Gtk.MenuItem("_Save")
+		self.item_save.set_use_underline(True)
+		self.item_load = Gtk.MenuItem("_Load")
+		self.item_load.set_use_underline(True)
+		self.item_delete = Gtk.MenuItem("_Delete")
+		self.item_delete.set_use_underline(True)
+		self.item_run = Gtk.MenuItem("_Run")
+		self.item_run.set_use_underline(True)
 		self.menu_macro.append(self.item_save)
 		self.menu_macro.append(self.item_load)
+		self.menu_macro.append(self.item_delete)
 		self.menu_macro.append(self.item_run)
 		
 		self.menu_help = Gtk.Menu()
-		self.item_about = Gtk.MenuItem("About")
+		self.item_about = Gtk.MenuItem("_About")
+		self.item_about.set_use_underline(True)	
 		self.menu_help.append(self.item_about)
 
-		self.item_ocrdesktop = Gtk.MenuItem("OCRdektop")
-		self.item_interact = Gtk.MenuItem("Interact")
-		self.item_macro = Gtk.MenuItem("Macro")
-		self.item_help = Gtk.MenuItem("Help")
+		self.item_ocrdesktop = Gtk.MenuItem("_OCRdektop")
+		self.item_ocrdesktop.set_use_underline(True)
+		self.item_interact = Gtk.MenuItem("_Interact")
+		self.item_interact.set_use_underline(True)
+		self.item_macro = Gtk.MenuItem("_Macro")
+		self.item_macro.set_use_underline(True)
+		self.item_help = Gtk.MenuItem("_Help")
+		self.item_help.set_use_underline(True)
 
 		self.item_ocrdesktop.set_submenu(self.menu_ocrdesktop)
 		self.item_interact.set_submenu(self.menu_interact)
@@ -295,6 +316,7 @@ class OCRNavigation(Gtk.Window):
 		cols.extend([GObject.TYPE_INT])
 		model = Gtk.ListStore(*cols)
 		self._tree.set_model(model)
+		columnHeaders = ['OCR Text','X Position','Y Position','Confidence']
 
 		cell = Gtk.CellRendererText()
 		column = Gtk.TreeViewColumn("OCR Text", cell, text=0)
@@ -434,10 +456,10 @@ class OCRNavigation(Gtk.Window):
 		eventString = Gdk.keyval_name(entries[0])
 		if self._debug:
 			print(eventString)
-		if eventString == 'Escape':
-			Gtk.main_quit()
-		if eventString == 'Return':
-			self._leftClickButton.grab_focus()
+#		if eventString == 'Escape':
+#			Gtk.main_quit()
+#		if eventString == 'Return':
+#			self._leftClickButton.grab_focus()
 
 	def _cancel(self):
 		if self.GTKmainIsRunning:
