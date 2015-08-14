@@ -12,9 +12,6 @@ Features ready for implementation:
 - "Entry Dialog" for selecting Options OCR the window or just an area?
 - Make settings (like fontsize) saveable in gsettings or flatfile
   See http://www.micahcarrick.com/gsettings-python-gnome-3.html
-- check for correct lib versions
-  See https://git.gnome.org/browse/orca/tree/src/orca/orca.py?id=9376d33700ffd117b7b3c98a1c5f23a72b1a763f
-  See https://git.gnome.org/browse/orca/commit/?id=9376d33700ffd117b7b3c98a1c5f23a72b1a763f
 
 Needs experimenting or info
 
