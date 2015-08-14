@@ -225,6 +225,62 @@ class OCRNavigation(Gtk.Window):
 			self._textbuffer.place_cursor(self._textbuffer.get_start_iter())
 		self._scrolledWindowText.add(self._textbox)
 		
+		self.menubar = Gtk.MenuBar()
+
+		self.menu_ocrdesktop = Gtk.Menu()
+		self.item_toggleview = Gtk.MenuItem("Toggle View")
+		self.item_close = Gtk.MenuItem("Close")
+		self.menu_ocrdesktop.append(self.item_toggleview)
+		self.menu_ocrdesktop.append(self.item_close)
+		self.item_toggleview.connect("activate", self._toggleView)
+		self.item_close.connect("activate", Gtk.main_quit)
+		
+		self.menu_interact = Gtk.Menu()
+		self.item_preclick = Gtk.MenuItem("Preclick")
+		self.item_leftclick = Gtk.MenuItem("Left Click")
+		self.item_doubletclick = Gtk.MenuItem("Double Click")
+		self.item_rightclick = Gtk.MenuItem("Right Click")
+		self.item_middleclick = Gtk.MenuItem("Middle Click")
+		self.item_routeto = Gtk.MenuItem("Route To")
+		self.menu_interact.append(self.item_preclick)
+		self.menu_interact.append(self.item_leftclick)
+		self.menu_interact.append(self.item_doubletclick)
+		self.menu_interact.append(self.item_rightclick)
+		self.menu_interact.append(self.item_middleclick)
+		self.menu_interact.append(self.item_routeto)
+		self.item_preclick.connect("activate", self._setSaveToMacro)
+		self.item_leftclick.connect("activate", self._onLeftClick)
+		self.item_doubletclick.connect("activate", self._onDoubleLeftClick)
+		self.item_rightclick.connect("activate", self._onRightClick)
+		self.item_middleclick.connect("activate", self._onMiddleClick)
+		self.item_routeto.connect("activate", self._routeToPoint)
+		
+		self.menu_macro = Gtk.Menu()
+		self.item_save = Gtk.MenuItem("Save")
+		self.item_load = Gtk.MenuItem("Load")
+		self.item_run = Gtk.MenuItem("Run")
+		self.menu_macro.append(self.item_save)
+		self.menu_macro.append(self.item_load)
+		self.menu_macro.append(self.item_run)
+		
+		self.menu_help = Gtk.Menu()
+		self.item_about = Gtk.MenuItem("About")
+		self.menu_help.append(self.item_about)
+
+		self.item_ocrdesktop = Gtk.MenuItem("OCRdektop")
+		self.item_interact = Gtk.MenuItem("Interact")
+		self.item_macro = Gtk.MenuItem("Macro")
+		self.item_help = Gtk.MenuItem("Help")
+
+		self.item_ocrdesktop.set_submenu(self.menu_ocrdesktop)
+		self.item_interact.set_submenu(self.menu_interact)
+		self.item_macro.set_submenu(self.menu_macro)
+		self.item_help.set_submenu(self.menu_help)
+		self.menubar.append(self.item_ocrdesktop)
+		self.menubar.append(self.item_interact)
+		self.menubar.append(self.item_macro)
+		self.menubar.append(self.item_help)
+
 		self._scrolledWindowTree = Gtk.ScrolledWindow()
 
 		self._tree = Gtk.TreeView()
@@ -304,9 +360,9 @@ class OCRNavigation(Gtk.Window):
 		#self._tree.connect("notify::cursor-position", self._onCursorTreePositionChanged)
 		
 		self._grid = Gtk.Grid()
-
-		self._grid.attach(self._scrolledWindowTree, 0, 0, 10, 10)
-		self._grid.attach(self._scrolledWindowText, 0, 0, 10, 10)
+		self._grid.attach(self.menubar,0,0,10,1)
+		self._grid.attach(self._scrolledWindowTree, 0, 1, 10, 10)
+		self._grid.attach(self._scrolledWindowText, 0, 1, 10, 10)
 		self._grid.attach(self._viewButton, 0, 11, 1, 1)
 		self._grid.attach(self._saveToMacroButton, 1, 11, 1, 1)
 		self._grid.attach(self._leftClickButton, 2, 11, 1, 1)
@@ -477,20 +533,19 @@ class OCRScreenReader():
 				self._macro._RunMacro()
 
 		#NAVIGATION
-		Navigation = OCRNavigation(self._debug)
+		self._Navigation = OCRNavigation(self._debug)
 
-		Navigation._setSendToClipboard(self._sendToClipboard)
-		Navigation._setScreenShotMode(self._screenShotMode)
-		Navigation._setHideGui(self._hideGui)
-		Navigation._setMacro(self._macro)
+		self._Navigation._setSendToClipboard(self._sendToClipboard)
+		self._Navigation._setScreenShotMode(self._screenShotMode)
+		self._Navigation._setHideGui(self._hideGui)
 
-		while not self._macro.getMacroFinished() and self._macro._macroExists():
-			pass
-		time.sleep(0.3)
-		if Navigation._screenShot():
-			Navigation._ocrImage()
+		self._macro.WaitForFinish()
+		self._Navigation._setMacro(self._macro)
+		
+		if self._Navigation._screenShot():
+			self._Navigation._ocrImage()
 			if not self._hideGui:
-				Navigation.showGUI()
+				self._Navigation.showGUI()
 
 		#FUNCTIONS
 	def _setCommandLineOptions(self):
@@ -584,20 +639,21 @@ class OCRMacroManager:
 	def _onRunMacro(self, widget):
 		self._gui.hide()
 		_thread.start_new_thread( self._threadDoClick, () )	
-		self._cancel()
+		self._cancel(False)
 		
 	def _onDeleteMacro(self, widget):
 		self._deleteMacro()
-		self._cancel()
+		self._cancel(True)
 
 	def _onCancel(self, widget):
-		self._cancel()
+		self._cancel(True)
 
-	def _cancel(self):
+	def _cancel(self, setMacroFinished):
 		if self._gui != None:
 			self._gui.hide()
 		Gtk.main_quit()
-		self._MacroFinished = True
+		if setMacroFinished:
+			self._MacroFinished = True
 
 	def _macroExists(self):
 		return (os.path.exists(self._macroFile) and os.path.isfile(self._macroFile))
@@ -624,6 +680,11 @@ class OCRMacroManager:
 		
 	def getMacroFinished(self):
 		return self._MacroFinished
+		
+	def WaitForFinish(self):
+		while not self.getMacroFinished() and self._macroExists():
+			time.sleep(0.5)
+		time.sleep(0.3)
 		
 	def _deleteMacro(self):
 		os.remove(self._macroFile)
