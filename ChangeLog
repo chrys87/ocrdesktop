@@ -10,5 +10,6 @@
 - some clearups
 - check for correct gi lib versions on start
 - new commandline option -p for debugging
-- new application Menu in Navigator (F10) _OCRdesktop, _Interact, _Macro, _Help
+- brand new application Menu in Navigator (F10) _OCRdesktop, _Interact, _Macro, _Help
+- deprecate the many buttons. Now we can do everything (and more) with our menu
 - Macros runable/deletable/loadable from Navigation GUI
