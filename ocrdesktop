@@ -267,7 +267,7 @@ class OCRNavigation(Gtk.Window):
 		self.item_routeto.connect("activate", self._routeToPoint)
 		
 		self.menu_macro = Gtk.Menu()
-		self.item_save = Gtk.MenuItem("_Save")
+		self.item_save = Gtk.MenuItem("_Save As")
 		self.item_save.set_use_underline(True)
 		self.item_load = Gtk.MenuItem("_Load")
 		self.item_load.set_use_underline(True)
@@ -279,10 +279,10 @@ class OCRNavigation(Gtk.Window):
 		self.menu_macro.append(self.item_load)
 		self.menu_macro.append(self.item_delete)
 		self.menu_macro.append(self.item_run)
-		self.item_load.connect("activate", self._macro._onLoadMacro)
+		self.item_save.connect("activate", self._macro._saveMacro, self)
+		self.item_load.connect("activate", self._macro._onLoadMacro, self)
 		self.item_delete.connect("activate", self._macro._onDeleteMacro, False)
 		self.item_run.connect("activate", self._onRunMacro)
-#		self.item_routeto.connect("activate", self._routeToPoint)
 		
 		self.menu_help = Gtk.Menu()
 		self.item_about = Gtk.MenuItem("_About")
@@ -735,11 +735,24 @@ class OCRMacroManager:
 		if self._macroExists():
 			os.remove(self._macroFile)
 	
-	def _saveMacro(self):
-		pass
-	def _onLoadMacro(self, widget):
-		fileDialog = Gtk.FileChooserDialog("Please choose a file", None,Gtk.FileChooserAction.OPEN,(Gtk.STOCK_CANCEL,Gtk.ResponseType.CANCEL,Gtk.STOCK_OPEN,Gtk.ResponseType.OK))
+	def _saveMacro(self, widget, window):
+		if not self._macroExists():
+			return
+		fileDialog = Gtk.FileChooserDialog("Save As", window,Gtk.FileChooserAction.SAVE,("_Cancel",Gtk.ResponseType.CANCEL,"_Save",Gtk.ResponseType.OK))
+		fileDialog.set_modal(True)
+		self.add_filters(fileDialog)
 
+		response = fileDialog.run()
+		if response == Gtk.ResponseType.OK:
+			shutil.copy( self._macroFile, fileDialog.get_filename(),)
+		elif response == Gtk.ResponseType.CANCEL:
+			pass
+
+		fileDialog.destroy()
+
+	def _onLoadMacro(self, widget, window):
+		fileDialog = Gtk.FileChooserDialog("Please choose a file", window,Gtk.FileChooserAction.OPEN,("_Cancel",Gtk.ResponseType.CANCEL,"_Open",Gtk.ResponseType.OK))
+		fileDialog.set_modal(True)
 		self.add_filters(fileDialog)
 
 		response = fileDialog.run()
