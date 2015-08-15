@@ -11,4 +11,4 @@
 - check for correct gi lib versions on start
 - new commandline option -p for debugging
 - new application Menu in Navigator (F10) _OCRdesktop, _Interact, _Macro, _Help
-- Macros runable/deletable from Navigation Screen
+- Macros runable/deletable/loadable from Navigation GUI
