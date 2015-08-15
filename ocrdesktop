@@ -81,6 +81,8 @@ class OCRNavigation(Gtk.Window):
 		self._scrolledWindowTree = None
 		self._scrolledWindowText = None
 		self._grid = None
+		self._menubar = None
+		self._accelerators = None
 		self._OCRWords = None		
 		self._OCRWordList = []
 		self._OCRText = ''
@@ -206,6 +208,12 @@ class OCRNavigation(Gtk.Window):
 			if int(OCRWord.confidence) != 0:
 				self._OCRWordList.append([OCRWord.value.decode("utf-8"),int((OCRWord.box[2] - OCRWord.box[0]) / 2 + OCRWord.box[0]),int((OCRWord.box[3] - OCRWord.box[1]) / 2 + OCRWord.box[1]),int(OCRWord.confidence)])
 
+	def add_accelerator(self, widget, accelerator, signal="activate"):
+		"""Adds a keyboard shortcut"""
+		if accelerator is not None:
+			key, mod = Gtk.accelerator_parse(accelerator)
+			widget.add_accelerator(signal, self._accelerators, key, mod, Gtk.AccelFlags.VISIBLE)
+	
 	def _createNavListDialog(self):
 		Gtk.Window.__init__(self, title="OCR")
 		self.set_default_size(700,700)
@@ -222,36 +230,52 @@ class OCRNavigation(Gtk.Window):
 			self._textbuffer.place_cursor(self._textbuffer.get_start_iter())
 		self._scrolledWindowText.add(self._textbox)
 		
-		self.menubar = Gtk.MenuBar()
+		self._accelerators = Gtk.AccelGroup()
+
+		self._menubar = Gtk.MenuBar()
 
 		self.menu_ocrdesktop = Gtk.Menu()
-		self.item_toggleview = Gtk.MenuItem("_Toggle View")
+		self.item_toggleview = Gtk.MenuItem("Toggle _View")
 		self.item_toggleview.set_use_underline(True)
+		self.add_accelerator(self.item_toggleview, "<Control>v","activate")
+		self.item_clipboard = Gtk.MenuItem("Send to _Clipboard")
+		self.item_clipboard.set_use_underline(True)
+		self.add_accelerator(self.item_clipboard, "<Control>c","activate")
 		self.item_font = Gtk.MenuItem("_Font")
 		self.item_font.set_use_underline(True)
 		self.item_close = Gtk.MenuItem("_Close")
+		self.add_accelerator(self.item_close, "<Control>q","activate")
 		self.item_close.set_use_underline(True)
 		self.menu_ocrdesktop.append(self.item_toggleview)
+		self.menu_ocrdesktop.append(self.item_clipboard)
 		self.menu_ocrdesktop.append(self.item_font)
 		self.menu_ocrdesktop.append(self.item_close)
 		self.item_toggleview.connect("activate", self._toggleView)
+		self.item_clipboard.connect("activate", self._onSetTextToClipboard, self._OCRText)
 		self.item_close.connect("activate", Gtk.main_quit)
 		
 		self.menu_interact = Gtk.Menu()
 		self.item_preclick = Gtk.MenuItem("_Preclick")
 		self.item_preclick.set_use_underline(True)
+		self.add_accelerator(self.item_preclick, "<Control>p","activate")
 		self.item_leftclick = Gtk.MenuItem("_Left Click")
 		self.item_leftclick.set_use_underline(True)
+		self.add_accelerator(self.item_leftclick, "<Control>l","activate")
 		self.item_doubletclick = Gtk.MenuItem("_Double Click")
 		self.item_doubletclick.set_use_underline(True)
+		self.add_accelerator(self.item_doubletclick, "<Control>d","activate")
 		self.item_rightclick = Gtk.MenuItem("_Right Click")
 		self.item_rightclick.set_use_underline(True)
+		self.add_accelerator(self.item_rightclick, "<Control>r","activate")
 		self.item_middleclick = Gtk.MenuItem("_Middle Click")
 		self.item_middleclick.set_use_underline(True)
+		self.add_accelerator(self.item_middleclick, "<Control>m","activate")
 		self.item_routeto = Gtk.MenuItem("Route _To")
 		self.item_routeto.set_use_underline(True)
-		self.item_sendkey = Gtk.MenuItem("_Send Key")
+		self.add_accelerator(self.item_routeto, "<Control>t","activate")
+		self.item_sendkey = Gtk.MenuItem("Send _Key")
 		self.item_sendkey.set_use_underline(True)
+		self.add_accelerator(self.item_sendkey, "<Control>k","activate")
 		self.menu_interact.append(self.item_preclick)
 		self.menu_interact.append(self.item_leftclick)
 		self.menu_interact.append(self.item_doubletclick)
@@ -269,12 +293,16 @@ class OCRNavigation(Gtk.Window):
 		self.menu_macro = Gtk.Menu()
 		self.item_save = Gtk.MenuItem("_Save As")
 		self.item_save.set_use_underline(True)
+		self.add_accelerator(self.item_save, "<Control>s","activate")
 		self.item_load = Gtk.MenuItem("_Load")
 		self.item_load.set_use_underline(True)
-		self.item_delete = Gtk.MenuItem("_Delete")
+		self.add_accelerator(self.item_load, "<Control>o","activate")
+		self.item_delete = Gtk.MenuItem("_Unload")
 		self.item_delete.set_use_underline(True)
+		self.add_accelerator(self.item_delete, "<Control>u","activate")
 		self.item_run = Gtk.MenuItem("_Run")
 		self.item_run.set_use_underline(True)
+		self.add_accelerator(self.item_run, "<Control>n","activate")
 		self.menu_macro.append(self.item_save)
 		self.menu_macro.append(self.item_load)
 		self.menu_macro.append(self.item_delete)
@@ -302,11 +330,11 @@ class OCRNavigation(Gtk.Window):
 		self.item_interact.set_submenu(self.menu_interact)
 		self.item_macro.set_submenu(self.menu_macro)
 		self.item_help.set_submenu(self.menu_help)
-		self.menubar.append(self.item_ocrdesktop)
-		self.menubar.append(self.item_interact)
-		self.menubar.append(self.item_macro)
-		self.menubar.append(self.item_help)
-
+		self._menubar.append(self.item_ocrdesktop)
+		self._menubar.append(self.item_interact)
+		self._menubar.append(self.item_macro)
+		self._menubar.append(self.item_help)
+		self.add_accel_group(self._accelerators)
 		self._scrolledWindowTree = Gtk.ScrolledWindow()
 
 		self._tree = Gtk.TreeView()
@@ -387,7 +415,7 @@ class OCRNavigation(Gtk.Window):
 		#self._tree.connect("notify::cursor-position", self._onCursorTreePositionChanged)
 		
 		self._grid = Gtk.Grid()
-		self._grid.attach(self.menubar,0,0,10,1)
+		self._grid.attach(self._menubar,0,0,10,1)
 		self._grid.attach(self._scrolledWindowTree, 0, 1, 10, 10)
 		self._grid.attach(self._scrolledWindowText, 0, 1, 10, 10)
 #		self._grid.attach(self._viewButton, 0, 11, 1, 1)
@@ -525,6 +553,9 @@ class OCRNavigation(Gtk.Window):
 			pyatspi.Registry.generateMouseEvent(xpos,ypos,mouseEvent)
 		self._cancel()
 
+	def _onSetTextToClipboard(self, widget, text_p):
+		self._setTextToClipboard(text_p)
+
 	def _setTextToClipboard(self, text_p):
 		ClipboardObj = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 		ClipboardObj.set_text(text_p, -1)
@@ -572,7 +603,8 @@ class OCRScreenReader():
 		self._Navigation._setSendToClipboard(self._sendToClipboard)
 		self._Navigation._setScreenShotMode(self._screenShotMode)
 		self._Navigation._setHideGui(self._hideGui)
-
+		if self._debug:
+			print("PreWaitForFinish")
 		self._macro.WaitForFinish()
 		self._Navigation._setMacro(self._macro)
 		
@@ -623,6 +655,8 @@ class OCRMacroManager:
 		self._cancelButton = None
 		self._runMacroButton = None
 		self._deleteMacroButton = None
+		self._menubar = None
+		self._accelerators = None
 		self._grid = None
 		self._labelAutoClickExists = None
 		self._macroFile ='/tmp/MyOCRMacro.ocrm'
@@ -638,11 +672,50 @@ class OCRMacroManager:
 	def _setDebug(self, debug_p):
 		self._debug = debug_p
 
+	def add_accelerator(self, widget, accelerator, signal="activate"):
+		"""Adds a keyboard shortcut"""
+		if accelerator is not None:
+			key, mod = Gtk.accelerator_parse(accelerator)
+			widget.add_accelerator(signal, self._accelerators, key, mod, Gtk.AccelFlags.VISIBLE)
+
+
 	def _createMacroConfirm(self):
 
 		dialog = Gtk.Window( title="Preclicks Manager")
-		dialog.set_default_size(600, 140)
+		dialog.set_default_size(500, 60)
 		dialog.set_modal(True)
+		self._accelerators = Gtk.AccelGroup()
+		self._menubar = Gtk.MenuBar()
+
+		self.menu_macro = Gtk.Menu()
+		self.item_save = Gtk.MenuItem("_Save As")
+		self.item_save.set_use_underline(True)
+		self.add_accelerator(self.item_save, "<Control>s","activate")
+		self.item_load = Gtk.MenuItem("_Load")
+		self.item_load.set_use_underline(True)
+		self.add_accelerator(self.item_load, "<Control>o","activate")
+		self.item_delete = Gtk.MenuItem("_Unload")
+		self.item_delete.set_use_underline(True)
+		self.add_accelerator(self.item_delete, "<Control>u","activate")
+		self.item_run = Gtk.MenuItem("_Run")
+		self.item_run.set_use_underline(True)
+		self.add_accelerator(self.item_run, "<Control>n","activate")
+		self.menu_macro.append(self.item_save)
+		self.menu_macro.append(self.item_load)
+		self.menu_macro.append(self.item_delete)
+		self.menu_macro.append(self.item_run)
+		self.item_save.connect("activate", self._saveMacro, self)
+		self.item_load.connect("activate", self._onLoadMacro, self)
+		self.item_delete.connect("activate", self._onDeleteMacro, False)
+		self.item_run.connect("activate", self._onRunMacro)
+		self.item_macro = Gtk.MenuItem("_Macro")
+		self.item_macro.set_use_underline(True)
+		self.item_help = Gtk.MenuItem("_Help")
+		self.item_help.set_use_underline(True)
+
+		self._menubar.append(self.item_macro)
+		self._menubar.append(self.item_help)
+		dialog.add_accel_group(self._accelerators)
 
 		self._labelAutoClickExists = Gtk.Label("Preclicks are existing. What do you want do do with the preclicks?")
 		self._labelAutoClickExists.set_selectable(True)
@@ -661,13 +734,13 @@ class OCRMacroManager:
 
 		self._grid = Gtk.Grid()
 
-		dialog.connect("delete-event", Gtk.main_quit)
+		dialog.connect("delete-event", self._onCancel)
 		dialog.connect('key-release-event', self._onKeyRelease)
-		
-		self._grid.attach(self._labelAutoClickExists, 0 , 0, 3, 1)
-		self._grid.attach(self._runMacroButton , 1, 1, 1, 1)
-		self._grid.attach(self._deleteMacroButton, 2, 1, 1, 1)
-		self._grid.attach(self._cancelButton, 3, 1, 1, 1)
+		self._grid.attach(self._menubar,0,0,3,1)
+		self._grid.attach(self._labelAutoClickExists, 0 , 1, 3, 1)
+		self._grid.attach(self._runMacroButton , 0, 2, 1, 1)
+		self._grid.attach(self._deleteMacroButton, 1, 2, 1, 1)
+		self._grid.attach(self._cancelButton, 2, 2, 1, 1)
 		dialog.add(self._grid)
 		
 		return dialog
@@ -682,15 +755,16 @@ class OCRMacroManager:
 		if close_p:
 			self._cancel(True)
 
-	def _onCancel(self, widget):
+	def _onCancel(self, widget, event=None):
 		self._cancel(True)
 
 	def _cancel(self, setMacroFinished):
 		if self._gui != None:
 			self._gui.hide()
-		Gtk.main_quit()
 		if setMacroFinished:
 			self._MacroFinished = True
+		Gtk.main_quit()
+
 
 	def _macroExists(self):
 		return (os.path.exists(self._macroFile) and os.path.isfile(self._macroFile))
@@ -726,6 +800,7 @@ class OCRMacroManager:
 	def WaitForFinish(self):
 		while not self.getMacroFinished() and self._macroExists():
 			time.sleep(0.5)
+			print(self.getMacroFinished())
 		time.sleep(0.3)
 		self._MacroFinished = False
 		if self._debug:
@@ -741,8 +816,10 @@ class OCRMacroManager:
 		fileDialog = Gtk.FileChooserDialog("Save As", window,Gtk.FileChooserAction.SAVE,("_Cancel",Gtk.ResponseType.CANCEL,"_Save",Gtk.ResponseType.OK))
 		fileDialog.set_modal(True)
 		self.add_filters(fileDialog)
+		Gtk.FileChooser.set_current_name(fileDialog, "NewOCRdesktopMakro.ocrm")
 
 		response = fileDialog.run()
+
 		if response == Gtk.ResponseType.OK:
 			shutil.copy( self._macroFile, fileDialog.get_filename(),)
 		elif response == Gtk.ResponseType.CANCEL:
@@ -818,7 +895,7 @@ class OCRMacroManager:
 		if self._debug:
 			print(eventString)
 		if eventString == 'Escape':
-			self._cancel()
+			self._cancel(True)
 #		if eventString == 'Return':
 #			self._leftClickButton.grab_focus()
 
