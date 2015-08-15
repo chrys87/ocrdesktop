@@ -9,7 +9,7 @@ __copyright__ = "Copyright (c) 2015 Chrys"
 __license__   = "LGPL"
 
 #Python Utils
-import os, sys, getopt, locale, time, re, _thread
+import os, sys, getopt, locale, time, re, _thread, shutil
 from PIL import Image
 
 #tesseract
@@ -279,7 +279,8 @@ class OCRNavigation(Gtk.Window):
 		self.menu_macro.append(self.item_load)
 		self.menu_macro.append(self.item_delete)
 		self.menu_macro.append(self.item_run)
-		self.item_delete.connect("activate", self._macro._onDeleteMacro)
+		self.item_load.connect("activate", self._macro._onLoadMacro)
+		self.item_delete.connect("activate", self._macro._onDeleteMacro, False)
 		self.item_run.connect("activate", self._onRunMacro)
 #		self.item_routeto.connect("activate", self._routeToPoint)
 		
@@ -548,7 +549,7 @@ class OCRScreenReader():
 		self._sendToClipboard = False
 		self._hideGui = False
 		self._screenShotMode = 0 # 0 = Window; 1 = Desktop
-		self._macroFile = '/tmp/MyOCRMacro.osm'
+		self._macroFile = '/tmp/MyOCRMacro.ocrm'
 		self._showHelp = False
 		self._debug = False
 		self._setCommandLineOptions()
@@ -558,7 +559,7 @@ class OCRScreenReader():
 
 		#MACRO
 		self._macro = OCRMacroManager(self._debug)
-		self._macro._setMcroFile(self._macroFile)
+		self._macro._loadMcroFile(self._macroFile)
 		if not self._hideGui:
 			self._macro.showGUI()
 		else:
@@ -624,13 +625,15 @@ class OCRMacroManager:
 		self._deleteMacroButton = None
 		self._grid = None
 		self._labelAutoClickExists = None
-		self._macroFile ='/tmp/MyOCRMacro.osm'
+		self._macroFile ='/tmp/MyOCRMacro.ocrm'
 		self._gui = None
 		self._MacroFinished = False
 		self._debug = debug_p
 		
-	def _setMcroFile(self, macroFile_p):
-		self._macroFile = macroFile_p
+	def _loadMcroFile(self, macroFile_p):
+		if self._loadMacroExists(macroFile_p):
+			if macroFile_p != self._macroFile:
+				shutil.copy(macroFile_p, self._macroFile)
 		
 	def _setDebug(self, debug_p):
 		self._debug = debug_p
@@ -674,9 +677,10 @@ class OCRMacroManager:
 		_thread.start_new_thread( self._threadRunMacro, () )	
 		self._cancel(False)
 		
-	def _onDeleteMacro(self, widget):
+	def _onDeleteMacro(self, widget, close_p=True):
 		self._deleteMacro()
-		self._cancel(True)
+		if close_p:
+			self._cancel(True)
 
 	def _onCancel(self, widget):
 		self._cancel(True)
@@ -690,6 +694,9 @@ class OCRMacroManager:
 
 	def _macroExists(self):
 		return (os.path.exists(self._macroFile) and os.path.isfile(self._macroFile))
+
+	def _loadMacroExists(self, newMacro_p):
+		return (os.path.exists(newMacro_p) and os.path.isfile(newMacro_p))
 
 	def _RunMacro(self):
 		self._MacroFinished = False
@@ -725,7 +732,35 @@ class OCRMacroManager:
 			print("WaitForFinish complete")
 		
 	def _deleteMacro(self):
-		os.remove(self._macroFile)
+		if self._macroExists():
+			os.remove(self._macroFile)
+	
+	def _saveMacro(self):
+		pass
+	def _onLoadMacro(self, widget):
+		fileDialog = Gtk.FileChooserDialog("Please choose a file", None,Gtk.FileChooserAction.OPEN,(Gtk.STOCK_CANCEL,Gtk.ResponseType.CANCEL,Gtk.STOCK_OPEN,Gtk.ResponseType.OK))
+
+		self.add_filters(fileDialog)
+
+		response = fileDialog.run()
+		if response == Gtk.ResponseType.OK:
+			shutil.copy(fileDialog.get_filename(), self._macroFile)
+		elif response == Gtk.ResponseType.CANCEL:
+			pass
+
+		fileDialog.destroy()
+
+	def add_filters(self, fileDialog):
+		filter_text = Gtk.FileFilter()
+		filter_text.set_name("Macro Textfiles")
+		filter_text.add_mime_type("text/plain")
+		filter_text.add_pattern("*.ocrm")
+		fileDialog.add_filter(filter_text)
+
+		filter_any = Gtk.FileFilter()
+		filter_any.set_name("Any files")
+		filter_any.add_pattern("*")
+		fileDialog.add_filter(filter_any)
 
 	def _doKeyboardMacroStep(self,xpos, ypos, mouseEvent, posRelation = "abs"):
 		pass
