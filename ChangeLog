@@ -1,4 +1,5 @@
 0.9.30
+- make fontsize/ fontfamiliy changeable 
 - different types of macros
   c = command ( for now wie have the delay command)
 	"c,delay,seconds" 
@@ -13,3 +14,8 @@
 - brand new application Menu in Navigator (F10) _OCRdesktop, _Interact, _Macro, _Help
 - deprecate the many buttons. Now we can do everything (and more) with our menu
 - Macros runable/deletable/loadable/save from Navigation GUI
+- Implement _Macro Menu in MacroRecorder GUI
+- Rename Delete (macro) to "Unload"
+- Send to Clippboard in Menu ctrl + C
+- Set default filename in Save As
+

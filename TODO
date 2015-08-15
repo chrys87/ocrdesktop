@@ -1,17 +1,12 @@
 Features ready for implementation:
-- make fontsize/ fontfamiliy changeable
-  See here http://askubuntu.com/questions/181850/change-font-programmatically-for-gtk3-textview-quickly-widgets-texteditor
 - allow sending keyboard shortcuts
   See https://people.gnome.org/~parente/pyatspi/doc/pyatspi.registry.Registry-class.html#generateKeyboardEvent
 - allow keyboard shortcuts in macro recorder
   See https://people.gnome.org/~parente/pyatspi/doc/pyatspi.registry.Registry-class.html#registerKeystrokeListener
-- use css for more visible selections
-  See http://wolfvollprecht.de/blog/gtk-python-and-css-are-an-awesome-combo/
-- "Save As" for macros via filechooser
-- UI redesign/ F10 Menü, contextmenu, remove the buch of buttons
 - "Entry Dialog" for selecting Options OCR the window or just an area?
 - Make settings (like fontsize) saveable in gsettings or flatfile
   See http://www.micahcarrick.com/gsettings-python-gnome-3.html
+- Make it translateable _("bla")
 
 Needs experimenting or info
 

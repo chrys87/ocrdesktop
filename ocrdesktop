@@ -82,6 +82,7 @@ class OCRNavigation(Gtk.Window):
 		self._scrolledWindowText = None
 		self._grid = None
 		self._menubar = None
+		self._font_button = None
 		self._accelerators = None
 		self._OCRWords = None		
 		self._OCRWordList = []
@@ -213,6 +214,10 @@ class OCRNavigation(Gtk.Window):
 		if accelerator is not None:
 			key, mod = Gtk.accelerator_parse(accelerator)
 			widget.add_accelerator(signal, self._accelerators, key, mod, Gtk.AccelFlags.VISIBLE)
+
+	def on_font_set(self, widget):
+		font_description = widget.get_font_desc()
+		self._textbox.modify_font(font_description)
 	
 	def _createNavListDialog(self):
 		Gtk.Window.__init__(self, title="OCR")
@@ -335,6 +340,7 @@ class OCRNavigation(Gtk.Window):
 		self._menubar.append(self.item_macro)
 		self._menubar.append(self.item_help)
 		self.add_accel_group(self._accelerators)
+
 		self._scrolledWindowTree = Gtk.ScrolledWindow()
 
 		self._tree = Gtk.TreeView()
@@ -375,6 +381,9 @@ class OCRNavigation(Gtk.Window):
 				model.set_value(rowIter, i, cell)
 
 		self._tree.set_search_column(1)
+
+		self._font_button = Gtk.FontButton()
+		self._font_button.connect('font-set', self.on_font_set)
 
 		self._closeButton = Gtk.Button("_Close")
 		self._closeButton.set_use_underline(True)
@@ -418,7 +427,7 @@ class OCRNavigation(Gtk.Window):
 		self._grid.attach(self._menubar,0,0,10,1)
 		self._grid.attach(self._scrolledWindowTree, 0, 1, 10, 10)
 		self._grid.attach(self._scrolledWindowText, 0, 1, 10, 10)
-#		self._grid.attach(self._viewButton, 0, 11, 1, 1)
+		self._grid.attach(self._font_button, 0, 11, 1, 3)
 #		self._grid.attach(self._saveToMacroButton, 1, 11, 1, 1)
 #		self._grid.attach(self._leftClickButton, 2, 11, 1, 1)
 #		self._grid.attach(self._leftDoubleClickButton, 3, 11, 1, 1)
@@ -687,6 +696,8 @@ class OCRMacroManager:
 		self._accelerators = Gtk.AccelGroup()
 		self._menubar = Gtk.MenuBar()
 
+		self._menubar = Gtk.MenuBar()
+		
 		self.menu_macro = Gtk.Menu()
 		self.item_save = Gtk.MenuItem("_Save As")
 		self.item_save.set_use_underline(True)
@@ -704,17 +715,27 @@ class OCRMacroManager:
 		self.menu_macro.append(self.item_load)
 		self.menu_macro.append(self.item_delete)
 		self.menu_macro.append(self.item_run)
-		self.item_save.connect("activate", self._saveMacro, self)
-		self.item_load.connect("activate", self._onLoadMacro, self)
+		self.item_save.connect("activate", self._saveMacro, dialog)
+		self.item_load.connect("activate", self._onLoadMacro, dialog)
 		self.item_delete.connect("activate", self._onDeleteMacro, False)
 		self.item_run.connect("activate", self._onRunMacro)
+		
+		self.menu_help = Gtk.Menu()
+		self.item_about = Gtk.MenuItem("_About")
+		self.item_about.set_use_underline(True)	
+		self.menu_help.append(self.item_about)
+
 		self.item_macro = Gtk.MenuItem("_Macro")
 		self.item_macro.set_use_underline(True)
 		self.item_help = Gtk.MenuItem("_Help")
 		self.item_help.set_use_underline(True)
 
+		self.item_macro.set_submenu(self.menu_macro)
+		self.item_help.set_submenu(self.menu_help)
+
 		self._menubar.append(self.item_macro)
 		self._menubar.append(self.item_help)
+
 		dialog.add_accel_group(self._accelerators)
 
 		self._labelAutoClickExists = Gtk.Label("Preclicks are existing. What do you want do do with the preclicks?")
@@ -724,7 +745,7 @@ class OCRMacroManager:
 		self._runMacroButton.set_use_underline(True)
 		self._runMacroButton.connect('clicked', self._onRunMacro)
 
-		self._deleteMacroButton = Gtk.Button(label='_Delete')
+		self._deleteMacroButton = Gtk.Button(label='_Unload')
 		self._deleteMacroButton.set_use_underline(True)
 		self._deleteMacroButton.connect('clicked', self._onDeleteMacro)
 
@@ -894,8 +915,8 @@ class OCRMacroManager:
 		eventString = Gdk.keyval_name(entries[0])
 		if self._debug:
 			print(eventString)
-		if eventString == 'Escape':
-			self._cancel(True)
+#		if eventString == 'Escape':
+#			self._cancel(True)
 #		if eventString == 'Return':
 #			self._leftClickButton.grab_focus()
 
