@@ -281,6 +281,9 @@ class OCRNavigation(Gtk.Window):
 		self.menu_macro.append(self.item_load)
 		self.menu_macro.append(self.item_delete)
 		self.menu_macro.append(self.item_run)
+		self.item_delete.connect("activate", self._macro._onDeleteMacro)
+		self.item_run.connect("activate", self._onRunMacro)
+#		self.item_routeto.connect("activate", self._routeToPoint)
 		
 		self.menu_help = Gtk.Menu()
 		self.item_about = Gtk.MenuItem("_About")
@@ -506,6 +509,13 @@ class OCRNavigation(Gtk.Window):
 			pyatspi.Registry.generateMouseEvent(xpos,ypos,posRelation)
 		self._cancel()
 		
+	def _onRunMacro(self, widget):
+		if self._macro._macroExists():
+			_thread.start_new_thread( self._macro._threadRunMacro, () )	
+			self.hide()
+			self._macro.WaitForFinish()
+			self._cancel()
+			
 
 	def _threadDoClick(self, xpos=1,ypos=1,mouseEvent='b1c',delay=0.8, posRelation = "abs"):
 		if self._saveToMacro:
@@ -663,7 +673,7 @@ class OCRMacroManager:
 	
 	def _onRunMacro(self, widget):
 		self._gui.hide()
-		_thread.start_new_thread( self._threadDoClick, () )	
+		_thread.start_new_thread( self._threadRunMacro, () )	
 		self._cancel(False)
 		
 	def _onDeleteMacro(self, widget):
@@ -684,13 +694,15 @@ class OCRMacroManager:
 		return (os.path.exists(self._macroFile) and os.path.isfile(self._macroFile))
 
 	def _RunMacro(self):
+		self._MacroFinished = False
 		macroFile = open(self._macroFile, "r")
 		while 1:
 			line = macroFile.readline()
 			if not line:
 				break
+			if self._debug:
+				print("_RunMacro: " + line)
 			line = line.split(',')
-
 			# doing stuff
 			if line[0] == 'c':
 				if line[1] == 'delay':
@@ -710,6 +722,9 @@ class OCRMacroManager:
 		while not self.getMacroFinished() and self._macroExists():
 			time.sleep(0.5)
 		time.sleep(0.3)
+		self._MacroFinished = False
+		if self._debug:
+			print("WaitForFinish complete")
 		
 	def _deleteMacro(self):
 		os.remove(self._macroFile)
@@ -721,7 +736,11 @@ class OCRMacroManager:
 		pyatspi.Registry.generateMouseEvent(xpos,ypos,posRelation)
 		if (mouseEvent != 'None'):
 			pyatspi.Registry.generateMouseEvent(xpos,ypos,mouseEvent)
-	def _threadDoClick(self):
+			
+	def _threadRunMacro(self):
+		if self._debug:
+			print("_threadRunMacro starts")
+		time.sleep(0.5)
 		self._RunMacro()
 
 	def _writeKeyboardToMacro(self, Xpos_p, Ypos_p, MouseEvent_p):
