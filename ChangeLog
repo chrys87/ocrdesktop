@@ -5,7 +5,7 @@
   m = mouse (fully functional)
 	"m,xpos,ypos,TypeOfClick"
   k = keyboard not implemented yet
-- use pyatspi directly
+- use pyatspi directly, remove orca depency
 - BUG pressing cancle in macro recorder provides a endles loop
 - some clearups
 - check for correct gi lib versions on start
