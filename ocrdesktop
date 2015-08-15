@@ -28,8 +28,6 @@ from gi.repository import Gtk, Gdk, GObject, Wnck
 # AT-SPI
 import pyatspi
 
-Debug_g = False
-
 KEY_CODE = {
     '1': 10, '2': 11, '3': 12, '4': 13, '5': 14, '6': 15,
     '7': 16, '8': 17, '9': 18, '0': 19, 'dash': 20, '=': 21,

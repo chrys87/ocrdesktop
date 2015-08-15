@@ -6,9 +6,9 @@
 	"m,xpos,ypos,TypeOfClick"
   k = keyboard not implemented yet
 - use pyatspi directly
-- pressing cancle in macro recorder provides a endles loop
+- BUG pressing cancle in macro recorder provides a endles loop
 - some clearups
 - check for correct gi lib versions on start
 - new commandline option -p for debugging
-- new application Menu (F10) _OCRdesktop, _Interact, _Macro, _Help
+- new application Menu in Navigator (F10) _OCRdesktop, _Interact, _Macro, _Help
 - Macros runable/deletable from Navigation Screen
