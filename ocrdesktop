@@ -253,7 +253,7 @@ class OCRNavigation(Gtk.Window):
 		self.item_close.set_use_underline(True)
 		self.menu_ocrdesktop.append(self.item_toggleview)
 		self.menu_ocrdesktop.append(self.item_clipboard)
-		self.menu_ocrdesktop.append(self.item_font)
+		#self.menu_ocrdesktop.append(self.item_font)
 		self.menu_ocrdesktop.append(self.item_close)
 		self.item_toggleview.connect("activate", self._toggleView)
 		self.item_clipboard.connect("activate", self._onSetTextToClipboard, self._OCRText)
@@ -506,36 +506,37 @@ class OCRNavigation(Gtk.Window):
 	def _cancel(self):
 		if self.GTKmainIsRunning:
 			Gtk.main_quit()
+			GTKmainIsRunning = False
 
 	def _routeToPoint(self, widget):
 		self.setFocus()
+		self.hide()
 		xpos, ypos = self._getSelectedEntry()
 		_thread.start_new_thread( self._threadrouteToPoint, (xpos,ypos, ) )
-		self.hide()
 
 	def _onRightClick(self, widget):
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
-		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b3c", ) )	
 		self.hide()
+		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b3c", ) )	
 
 	def _onLeftClick(self, widget):
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
-		_thread.start_new_thread( self._threadDoClick, (xpos,ypos, "b1c" ) )		
 		self.hide()
+		_thread.start_new_thread( self._threadDoClick, (xpos,ypos, "b1c" ) )		
 
 	def _onDoubleLeftClick(self, widget):
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
-		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b1d", ) )	
 		self.hide()
+		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b1d", ) )	
 
 	def _onMiddleClick(self, widget):
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
-		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b2c", ) )	
 		self.hide()
+		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b2c", ) )	
 
 	def _threadrouteToPoint(self, xpos=1,ypos=1,delay=0.8, posRelation = "abs"):
 		if self._saveToMacro:
@@ -547,11 +548,19 @@ class OCRNavigation(Gtk.Window):
 		
 	def _onRunMacro(self, widget):
 		if self._macro._macroExists():
-			_thread.start_new_thread( self._macro._threadRunMacro, () )	
 			self.hide()
-			self._macro.WaitForFinish()
-			self._cancel()
-			
+			_thread.start_new_thread( self._threadRunMacro, () )
+		else:
+			dialog = Gtk.MessageDialog(self, 0, Gtk.MessageType.INFO,
+				Gtk.ButtonsType.OK, "No Macro loaded")
+			dialog.format_secondary_text(
+				"You have to load a macro for execution.")
+			dialog.run()
+			dialog.destroy()	
+
+	def _threadRunMacro(self):
+		self._macro._threadRunMacro()	
+		self._cancel()
 
 	def _threadDoClick(self, xpos=1,ypos=1,mouseEvent='b1c',delay=0.8, posRelation = "abs"):
 		if self._saveToMacro:
@@ -794,6 +803,10 @@ class OCRMacroManager:
 		return (os.path.exists(newMacro_p) and os.path.isfile(newMacro_p))
 
 	def _RunMacro(self):
+		if not self._macroExists():
+			if self._debug:
+				print("No Macro loaded..")
+			return
 		self._MacroFinished = False
 		macroFile = open(self._macroFile, "r")
 		while 1:
@@ -809,7 +822,7 @@ class OCRMacroManager:
 					time.sleep(float(line[2]))
 
 			if line[0] == 'k':
-				self._doKeyboardMacroStep(int(line[1]), int(line[2]), line[3])
+				self._doKeyboardMacroStep(int(line[1]), line[2], int(line[3]))
 			if line[0] == 'm':
 				self._doMouseMacroStep(int(line[1]), int(line[2]), line[3])
 		macroFile.close()
@@ -873,8 +886,36 @@ class OCRMacroManager:
 		filter_any.add_pattern("*")
 		fileDialog.add_filter(filter_any)
 
-	def _doKeyboardMacroStep(self,xpos, ypos, mouseEvent, posRelation = "abs"):
-		pass
+	def _doKeyboardMacroStep(self,keyValue_p, keyString_p, eventType_p = 2):
+		"""
+		Arguments:
+		- keyValue_p: a long integer indicating the keycode or keysym of the key event
+			being synthesized.
+		- keyString_p: an (optional) UTF-8 string which, if keyval is NULL,
+			indicates a 'composed' keyboard input string which is
+			being synthesized; this type of keyboard event synthesis does
+			not emulate hardware keypresses but injects the string
+			as though a composing input method (such as XIM) were used.
+		- eventType_p: an AccessibleKeySynthType flag indicating whether keyval
+			is to be interpreted as a keysym rather than a keycode
+			(pyatspi.KEY_SYM), or whether to synthesize
+			KEY_PRESS = 0, KEY_RELEASE = 1, or both (KEY_PRESSRELEASE = 2).
+		"""
+		if keyValue_p == 0:
+			if keyString_p != '':
+				keyValue_p = KEY_CODE[keyString_p]
+			else:
+				if self._debug:
+					print("invalid keyboard macro",keyValue_p,keyString_p)
+					print("format:")
+					print("c, KeyValue, KeyString, eventType")
+				return 	
+		if eventType_p == 0:
+			pyatspi.Registry.generateKeyboardEvent(keyValue_p, keyString_p, pyatspi.KEY_PRESS)
+		elif eventType_p == 1:
+			pyatspi.Registry.generateKeyboardEvent(keyValue_p, keyString_p, pyatspi.KEY_RELEASE)
+		elif eventType_p == 2:
+			pyatspi.Registry.generateKeyboardEvent(keyValue_p, keyString_p, pyatspi.KEY_PRESSRELEASE)
 
 	def _doMouseMacroStep(self,xpos, ypos, mouseEvent, posRelation = "abs"):
 		pyatspi.Registry.generateMouseEvent(xpos,ypos,posRelation)
