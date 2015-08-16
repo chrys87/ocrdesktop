@@ -9,7 +9,7 @@
 	"k,KeyCode,KeyValue,event"
 - use pyatspi directly, remove orca depency
 - BUG pressing cancle in macro recorder provides a endles loop
-- some clearups
+- Overall Clearups and Bugfixes
 - check for correct gi lib versions on start
 - new commandline option -p for debugging
 - brand new application Menu in Navigator (F10) _OCRdesktop, _Interact, _Macro, _Help
