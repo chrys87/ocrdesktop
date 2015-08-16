@@ -851,7 +851,8 @@ class OCRMacroManager:
 	def WaitForFinish(self):
 		while not self.getMacroFinished() and self._macroExists():
 			time.sleep(0.5)
-			print(self.getMacroFinished())
+			if self._debug:
+				print(self.getMacroFinished())
 		time.sleep(0.3)
 		self._MacroFinished = False
 		if self._debug:
@@ -866,6 +867,9 @@ class OCRMacroManager:
 			return
 		fileDialog = Gtk.FileChooserDialog("Save As", window,Gtk.FileChooserAction.SAVE,("_Cancel",Gtk.ResponseType.CANCEL,"_Save",Gtk.ResponseType.OK))
 		fileDialog.set_modal(True)
+		fileDialog.set_default_size(800, 400)
+		fileDialog.set_local_only(False)
+		fileDialog.set_current_folder("~")
 		self.add_filters(fileDialog)
 		Gtk.FileChooser.set_current_name(fileDialog, "NewOCRdesktopMakro.ocrm")
 
@@ -893,6 +897,9 @@ class OCRMacroManager:
 	def _onLoadMacro(self, widget, window):
 		fileDialog = Gtk.FileChooserDialog("Please choose a file", window,Gtk.FileChooserAction.OPEN,("_Cancel",Gtk.ResponseType.CANCEL,"_Open",Gtk.ResponseType.OK))
 		fileDialog.set_modal(True)
+		fileDialog.set_default_size(800, 400)
+		fileDialog.set_local_only(False)
+		fileDialog.set_current_folder("~")
 		self.add_filters(fileDialog)
 
 		response = fileDialog.run()
