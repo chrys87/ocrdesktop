@@ -1,6 +1,4 @@
 Features ready for implementation:
-- allow sending keyboard shortcuts
-  See https://people.gnome.org/~parente/pyatspi/doc/pyatspi.registry.Registry-class.html#generateKeyboardEvent
 - allow keyboard shortcuts in macro recorder
   See https://people.gnome.org/~parente/pyatspi/doc/pyatspi.registry.Registry-class.html#registerKeystrokeListener
 - "Entry Dialog" for selecting Options OCR the window or just an area?
