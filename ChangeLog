@@ -5,7 +5,8 @@
 	"c,delay,seconds" 
   m = mouse (fully functional)
 	"m,xpos,ypos,TypeOfClick"
-  k = keyboard not implemented yet
+  k = keyboard (experimental)
+	"k,KeyCode,KeyValue,event"
 - use pyatspi directly, remove orca depency
 - BUG pressing cancle in macro recorder provides a endles loop
 - some clearups
