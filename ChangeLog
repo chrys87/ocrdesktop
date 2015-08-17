@@ -7,6 +7,7 @@
 	"m,xpos,ypos,TypeOfClick"
   k = keyboard (experimental)
 	"k,KeyCode,KeyValue,event"
+- initial recording of k macros 
 - use pyatspi directly, remove orca depency
 - BUG pressing cancle in macro recorder provides a endles loop
 - Overall Clearups and Bugfixes
@@ -20,4 +21,5 @@
 - Send to Clippboard in Menu ctrl + C
 - Set default filename in Save As
 - About Dialog
+- Retry OCR <F5> (did the OCR again with the current screenshot for hopfully better results)
 

@@ -77,12 +77,14 @@ class OCRNavigation(Gtk.Window):
 		self._saveToMacroButton = None
 		self._viewButton = None
 		self._viewMode = 0
+		self._keyboardOverlayActive = False
 		self._screenShotMode = 0 # 0 = Window; 1 = Desktop
 		self._sendToClipboard = False
 		self._hideGui = False
 		self._saveToMacro = False
 		self._scrolledWindowTree = None
 		self._scrolledWindowText = None
+		self._keyboardOverlayLabel = None
 		self._grid = None
 		self._menubar = None
 		self._font_button = None
@@ -98,6 +100,7 @@ class OCRNavigation(Gtk.Window):
 		locale.setlocale(locale.LC_NUMERIC, 'C') #needed by tesseract in non english languages 
 		self._macro = OCRMacroManager()
 		self._tess = tesseract("/usr/share")
+		self._isRefreshing = False
 		
 	def _setHideGui(self, hideGui_p):
 		self.hideGui = hideGui_p
@@ -219,18 +222,43 @@ class OCRNavigation(Gtk.Window):
 			widget.add_accelerator(signal, self._accelerators, key, mod, Gtk.AccelFlags.VISIBLE)
 
 	def on_font_set(self, widget):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		font_description = widget.get_font_desc()
 		self._textbox.modify_font(font_description)
-	
-	def _createNavListDialog(self):
-		Gtk.Window.__init__(self, title="OCR")
-		self.set_default_size(700,700)
+		
+	def _onRefreshContent(self, widget):
+		self._refreshContent()
+		
+	def _refreshContent(self):
+		if self._isRefreshing == True:
+			print("refresh already running")
+			return
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
+		self._isRefreshing = True
+		if self._debug:
+			print("refresh")
+		self._tree = None
+		self._OCRWords = None		
+		self._OCRWordList = []
+		self._OCRText = ''
+		self._scrolledWindowTree = None
+		self._scrolledWindowText = None
+		self._textbox = None
+		
+		self._ocrImage()
 
 		self._scrolledWindowText = Gtk.ScrolledWindow()
 
 		self._textbox = Gtk.TextView()
 		self._textbox.set_hexpand(True)
 		self._textbox.set_vexpand(True)
+		self._textbox.show()
 		self._textbuffer = self._textbox.get_buffer()
 		self._textbuffer.set_text(self._OCRText)
 		self._textbox.set_editable(False)
@@ -238,6 +266,89 @@ class OCRNavigation(Gtk.Window):
 			self._textbuffer.place_cursor(self._textbuffer.get_start_iter())
 		self._scrolledWindowText.add(self._textbox)
 		
+		self._scrolledWindowTree = Gtk.ScrolledWindow()
+		self._tree = Gtk.TreeView()
+		self._tree.set_hexpand(True)
+		self._tree.set_vexpand(True)
+		self._tree.show()
+		self._scrolledWindowTree.add(self._tree)
+
+		cols = [GObject.TYPE_STRING]
+		cols.extend([GObject.TYPE_STRING])
+		cols.extend([GObject.TYPE_INT])
+		cols.extend([GObject.TYPE_INT])
+		cols.extend([GObject.TYPE_INT])
+		model = Gtk.ListStore(*cols)
+		self._tree.set_model(model)
+		columnHeaders = ['OCR Text','X Position','Y Position','Confidence']
+		
+		cell = Gtk.CellRendererText()
+		column = Gtk.TreeViewColumn("OCR Text", cell, text=0)
+		column.set_visible(False)
+		self._tree.append_column(column)
+
+		for i, header in enumerate(columnHeaders):
+			cell = Gtk.CellRendererText()
+			column = Gtk.TreeViewColumn(header, cell, text=i+1)
+			#column.set_sort_column_id(i+1)
+			self._tree.append_column(column)
+
+		model = self._tree.get_model()
+		for row in self._OCRWordList:
+			rowIter = model.append(None)
+			i = 0
+			for cell in row:
+				i = i + 1
+				if i == 2:
+					cell = cell / self._scaleFactor + self._offsetXpos
+				if i == 3:
+					cell = cell / self._scaleFactor + self._offsetYpos
+				model.set_value(rowIter, i, cell)
+
+		self._tree.set_search_column(1)
+		self._grid.attach(self._scrolledWindowTree, 0, 1, 10, 10)
+		self._grid.attach(self._scrolledWindowText, 0, 1, 10, 10)
+		self._setView(False)
+		self._isRefreshing = False
+		
+	def _onSendKey(self, event):
+		if self._debug:
+			print("_onSendKey")
+		if self._debug:
+			print(event.type)
+			print(event.event_string)
+		if event.type == pyatspi.KEY_PRESS:
+			if event.event_string =='F4':
+				pyatspi.Registry.deregisterKeystrokeListener(self._onSendKey)
+				self._keyboardOverlayActive = False
+				self._setView(False)
+				return True
+			eventTypeID = 0
+			
+		elif event.type == pyatspi.KEY_RELEASE:
+			eventTypeID = 1
+		elif event.type == pyatspi.KEY_PRESSRELEASE:
+			eventTypeID = 2		
+		self._macro._writeKeyboardToMacro(0, event.event_string, eventTypeID)
+		return True
+		
+	def _sendKeyMode(self, widget):
+		if self._debug:
+			print("sendKeyMode")
+		self._keyboardOverlayActive = True
+		self._setView(False)
+		pyatspi.Registry.registerKeystrokeListener(self._onSendKey,mask=pyatspi.allModifiers(), kind=(pyatspi.KEY_PRESS,pyatspi.KEY_RELEASE,pyatspi.KEY_PRESSRELEASE))
+		if self._debug:
+			print("Keyboardlistener is registered")
+
+
+
+
+	def _createNavListDialog(self):
+		Gtk.Window.__init__(self, title="OCR")
+		self.set_default_size(700,700)
+		self._grid = Gtk.Grid()
+	
 		self._accelerators = Gtk.AccelGroup()
 
 		self._menubar = Gtk.MenuBar()
@@ -246,6 +357,9 @@ class OCRNavigation(Gtk.Window):
 		self.item_toggleview = Gtk.MenuItem("Toggle _View")
 		self.item_toggleview.set_use_underline(True)
 		self.add_accelerator(self.item_toggleview, "<Control>v","activate")
+		self.item_retry = Gtk.MenuItem("_Retry OCR")
+		self.item_retry.set_use_underline(True)
+		self.add_accelerator(self.item_retry, "F5","activate")
 		self.item_clipboard = Gtk.MenuItem("Send to _Clipboard")
 		self.item_clipboard.set_use_underline(True)
 		self.add_accelerator(self.item_clipboard, "<Control>c","activate")
@@ -255,15 +369,17 @@ class OCRNavigation(Gtk.Window):
 		self.add_accelerator(self.item_close, "<Control>q","activate")
 		self.item_close.set_use_underline(True)
 		self.menu_ocrdesktop.append(self.item_toggleview)
+		self.menu_ocrdesktop.append(self.item_retry)
 		self.menu_ocrdesktop.append(self.item_clipboard)
 		#self.menu_ocrdesktop.append(self.item_font)
 		self.menu_ocrdesktop.append(self.item_close)
-		self.item_toggleview.connect("activate", self._toggleView)
+		self.item_toggleview.connect("activate", self._onSetView,True)
+		self.item_retry.connect("activate", self._onRefreshContent)
 		self.item_clipboard.connect("activate", self._onSetTextToClipboard, self._OCRText)
 		self.item_close.connect("activate", Gtk.main_quit)
 		
 		self.menu_interact = Gtk.Menu()
-		self.item_preclick = Gtk.MenuItem("_Preclick")
+		self.item_preclick = Gtk.CheckMenuItem("_Preclick")
 		self.item_preclick.set_use_underline(True)
 		self.add_accelerator(self.item_preclick, "<Control>p","activate")
 		self.item_leftclick = Gtk.MenuItem("_Left Click")
@@ -297,6 +413,7 @@ class OCRNavigation(Gtk.Window):
 		self.item_rightclick.connect("activate", self._onRightClick)
 		self.item_middleclick.connect("activate", self._onMiddleClick)
 		self.item_routeto.connect("activate", self._routeToPoint)
+		self.item_sendkey.connect("activate", self._sendKeyMode)
 		
 		self.menu_macro = Gtk.Menu()
 		self.item_save = Gtk.MenuItem("_Save As")
@@ -344,51 +461,17 @@ class OCRNavigation(Gtk.Window):
 		self._menubar.append(self.item_macro)
 		self._menubar.append(self.item_help)
 		self.add_accel_group(self._accelerators)
-
-		self._scrolledWindowTree = Gtk.ScrolledWindow()
-
-		self._tree = Gtk.TreeView()
-		self._tree.set_hexpand(True)
-		self._tree.set_vexpand(True)
-		self._scrolledWindowTree.add(self._tree)
-
-		cols = [GObject.TYPE_STRING]
-		cols.extend([GObject.TYPE_STRING])
-		cols.extend([GObject.TYPE_INT])
-		cols.extend([GObject.TYPE_INT])
-		cols.extend([GObject.TYPE_INT])
-		model = Gtk.ListStore(*cols)
-		self._tree.set_model(model)
-		columnHeaders = ['OCR Text','X Position','Y Position','Confidence']
-
-		cell = Gtk.CellRendererText()
-		column = Gtk.TreeViewColumn("OCR Text", cell, text=0)
-		column.set_visible(False)
-		self._tree.append_column(column)
-
-		for i, header in enumerate(columnHeaders):
-			cell = Gtk.CellRendererText()
-			column = Gtk.TreeViewColumn(header, cell, text=i+1)
-			#column.set_sort_column_id(i+1)
-			self._tree.append_column(column)
-
-		model = self._tree.get_model()
-		for row in self._OCRWordList:
-			rowIter = model.append(None)
-			i = 0
-			for cell in row:
-				i = i + 1
-				if i == 2:
-					cell = cell / self._scaleFactor + self._offsetXpos
-				if i == 3:
-					cell = cell / self._scaleFactor + self._offsetYpos
-				model.set_value(rowIter, i, cell)
-
-		self._tree.set_search_column(1)
+		
+		self._keyboardOverlayLabel = Gtk.Label("Please insert keyboard commands. exit with: F4")
+		self._keyboardOverlayLabel.set_selectable(True)
 
 		self._font_button = Gtk.FontButton()
 		self._font_button.connect('font-set', self.on_font_set)
+		
+		self._refreshContent()
 
+		self.connect("delete-event", Gtk.main_quit)
+		'''
 		self._closeButton = Gtk.Button("_Close")
 		self._closeButton.set_use_underline(True)
 		self._closeButton.connect("clicked", Gtk.main_quit)
@@ -396,8 +479,6 @@ class OCRNavigation(Gtk.Window):
 		self._viewButton = Gtk.Button("Toggle _View")
 		self._viewButton.set_use_underline(True)
 		self._viewButton.connect("clicked", self._toggleView)
-
-		self.connect("delete-event", Gtk.main_quit)
 
 		self._leftClickButton = Gtk.Button("_Left Click")
 		self._leftClickButton.set_use_underline(True)
@@ -422,16 +503,15 @@ class OCRNavigation(Gtk.Window):
 		self._saveToMacroButton = Gtk.CheckButton("Sa_ve as Preclick")
 		self._saveToMacroButton.set_use_underline(True)
 		self._saveToMacroButton.connect("toggled", self._setSaveToMacro)
-
+		'''
 		self.connect('key-release-event', self._onKeyRelease)
 		#self._textbuffer.connect("notify::cursor-position", self._onCursorTextPositionChanged)
 		#self._tree.connect("notify::cursor-position", self._onCursorTreePositionChanged)
 		
-		self._grid = Gtk.Grid()
+
 		self._grid.attach(self._menubar,0,0,10,1)
-		self._grid.attach(self._scrolledWindowTree, 0, 1, 10, 10)
-		self._grid.attach(self._scrolledWindowText, 0, 1, 10, 10)
 		self._grid.attach(self._font_button, 0, 11, 1, 3)
+		self._grid.attach(self._keyboardOverlayLabel, 1, 6, 10, 1)
 #		self._grid.attach(self._saveToMacroButton, 1, 11, 1, 1)
 #		self._grid.attach(self._leftClickButton, 2, 11, 1, 1)
 #		self._grid.attach(self._leftDoubleClickButton, 3, 11, 1, 1)
@@ -460,7 +540,11 @@ class OCRNavigation(Gtk.Window):
 		pass
 
 	def _setSaveToMacro(self, widget):
-		self._saveToMacro = not self._saveToMacro
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
+		self._saveToMacro = widget.get_active()
 
 	def setFocus(self):
 		if self._viewMode == 0:		
@@ -472,9 +556,7 @@ class OCRNavigation(Gtk.Window):
 		self._gui = self._createNavListDialog()
 		self.set_modal(True)
 		self.show_all()
-		self._tree.grab_focus()
-		self._scrolledWindowTree.hide()
-		self._textbox.grab_focus()
+		self._setView(False)
 		self.startMain()
 		
 	def startMain(self):
@@ -482,6 +564,10 @@ class OCRNavigation(Gtk.Window):
 		Gtk.main()
 
 	def _onRunAboutDialog(self,widget,window):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		dialog = Gtk.AboutDialog(window)
 		dialog.set_authors(__authors__)
 		dialog.set_website(__website__)
@@ -493,18 +579,35 @@ class OCRNavigation(Gtk.Window):
 		dialog.run()
 		dialog.destroy()
 		
-	def _toggleView(self, widget):
+	def _onSetView(self, widget, Toggle=True):
+		self._setView(Toggle)
+			
+	def _setView(self, Toggle):
+		if self._keyboardOverlayActive == True:
+			self._scrolledWindowText.hide()
+			self._scrolledWindowTree.hide()
+			self._keyboardOverlayLabel.show()
+			self._keyboardOverlayLabel.grab_focus()
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
+		else:
+			self._keyboardOverlayLabel.hide()
 		self.setFocus()
-		if self._viewMode == 0:
+
+		if self._viewMode == 1:
+			if Toggle:
+				self._viewMode = 0
 			self._scrolledWindowText.hide()
 			self._scrolledWindowTree.show()
 			self._tree.grab_focus()
-			self._viewMode = 1
 		else:
+			if Toggle:
+				self._viewMode = 1
 			self._scrolledWindowText.show()
 			self._scrolledWindowTree.hide()
 			self._textbox.grab_focus()
-			self._viewMode = 0
+
 
 	def _onKeyRelease(self, widget, event):
 		keycode = event.hardware_keycode
@@ -512,8 +615,8 @@ class OCRNavigation(Gtk.Window):
 		entries_for_keycode = keymap.get_entries_for_keycode(keycode)
 		entries = entries_for_keycode[-1]
 		eventString = Gdk.keyval_name(entries[0])
-		if self._debug:
-			print(eventString)
+#		if self._debug:
+#			print(eventString)
 #		if eventString == 'Escape':
 #			Gtk.main_quit()
 #		if eventString == 'Return':
@@ -525,30 +628,50 @@ class OCRNavigation(Gtk.Window):
 			GTKmainIsRunning = False
 
 	def _routeToPoint(self, widget):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		self.setFocus()
 		self.hide()
 		xpos, ypos = self._getSelectedEntry()
 		_thread.start_new_thread( self._threadrouteToPoint, (xpos,ypos, ) )
 
 	def _onRightClick(self, widget):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
 		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b3c", ) )	
 
 	def _onLeftClick(self, widget):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
 		_thread.start_new_thread( self._threadDoClick, (xpos,ypos, "b1c" ) )		
 
 	def _onDoubleLeftClick(self, widget):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
 		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b1d", ) )	
 
 	def _onMiddleClick(self, widget):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
@@ -563,6 +686,10 @@ class OCRNavigation(Gtk.Window):
 		self._cancel()
 		
 	def _onRunMacro(self, widget):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		if self._macro._macroExists():
 			self.hide()
 			_thread.start_new_thread( self._threadRunMacro, () )
@@ -588,6 +715,10 @@ class OCRNavigation(Gtk.Window):
 		self._cancel()
 
 	def _onSetTextToClipboard(self, widget, text_p):
+		if self._keyboardOverlayActive == True:
+			if self._debug:
+				print("keyboardOverlayActive")
+			return
 		self._setTextToClipboard(text_p)
 
 	def _setTextToClipboard(self, text_p):
@@ -643,14 +774,15 @@ class OCRScreenReader():
 		self._Navigation._setMacro(self._macro)
 		
 		if self._Navigation._screenShot():
-			self._Navigation._ocrImage()
 			if not self._hideGui:
 				self._Navigation.showGUI()
+			else:
+				self._Navigation._ocrImage()
 
 		#FUNCTIONS
 	def _setCommandLineOptions(self):
 		try:
-			myopts, args = getopt.getopt(sys.argv[1:],"hpndcm:")
+			myopts, args = getopt.getopt(sys.argv[1:],"hvndcm:")
 			###############################
 			# o == option
 			# a == argument passed to the o
@@ -938,7 +1070,7 @@ class OCRMacroManager:
 		"""
 		if keyValue_p == 0:
 			if keyString_p != '':
-				keyValue_p = KEY_CODE[keyString_p]
+				keyValue_p = KEY_CODE[keyString_p.lower()]
 			else:
 				if self._debug:
 					print("invalid keyboard macro",keyValue_p,keyString_p)
@@ -963,8 +1095,16 @@ class OCRMacroManager:
 		time.sleep(0.5)
 		self._RunMacro()
 
-	def _writeKeyboardToMacro(self, Xpos_p, Ypos_p, MouseEvent_p):
-		pass
+	def _writeKeyboardToMacro(self,keyValue_p, keyString_p, eventType_p):
+		if eventType_p == pyatspi.KEY_PRESS:
+			eventTypeID = 0
+		elif eventType_p == pyatspi.KEY_RELEASE:
+			eventTypeID = 1
+		elif eventType_p == pyatspi.KEY_PRESSRELEASE:
+			eventTypeID = 2
+		macroFile = open(self._macroFile, "a")
+		macroFile.write('k,' + str(keyValue_p) + ',' + str(keyString_p)  + ',' + str(eventTypeID) + '\n')
+		macroFile.close()
 
 	def _writeMouseToMacro(self, Xpos_p, Ypos_p, MouseEvent_p):
 		macroFile = open(self._macroFile, "a")
@@ -989,8 +1129,8 @@ class OCRMacroManager:
 		entries_for_keycode = keymap.get_entries_for_keycode(keycode)
 		entries = entries_for_keycode[-1]
 		eventString = Gdk.keyval_name(entries[0])
-		if self._debug:
-			print(eventString)
+#		if self._debug:
+#			print(eventString)
 #		if eventString == 'Escape':
 #			self._cancel(True)
 #		if eventString == 'Return':
