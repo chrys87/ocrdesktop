@@ -656,7 +656,7 @@ class OCRScreenReader():
 			# a == argument passed to the o
 			###############################
 			for o, a in myopts:
-				if o == '-p':
+				if o == '-v':
 					self._debug = True
 					print('Debugmode ON')
 				elif o == '-d':
@@ -673,10 +673,11 @@ class OCRScreenReader():
 					self._printHelp()
 
 	def _printHelp(self):
+		print(__version__)
 		print("ocrdesktop -h -p -n -d -c -m")
 		print("-h		Print help with start")
 		print("-n		hide GUI  (use with -c or -m")
-		print("-p		print debug messages")
+		print("-v		print debug messages")
 		print("-d		OCR the Destkop")
 		print("-c		Send to Clipboard")
 		print("-m <MacroFile>	run a macro before starting.")	
@@ -850,10 +851,10 @@ class OCRMacroManager:
 		
 	def WaitForFinish(self):
 		while not self.getMacroFinished() and self._macroExists():
-			time.sleep(0.5)
+			time.sleep(0.3)
 			if self._debug:
 				print(self.getMacroFinished())
-		time.sleep(0.3)
+		time.sleep(0.2)
 		self._MacroFinished = False
 		if self._debug:
 			print("WaitForFinish complete")
@@ -869,7 +870,6 @@ class OCRMacroManager:
 		fileDialog.set_modal(True)
 		fileDialog.set_default_size(800, 400)
 		fileDialog.set_local_only(False)
-		fileDialog.set_current_folder("~")
 		self.add_filters(fileDialog)
 		Gtk.FileChooser.set_current_name(fileDialog, "NewOCRdesktopMakro.ocrm")
 
@@ -899,7 +899,6 @@ class OCRMacroManager:
 		fileDialog.set_modal(True)
 		fileDialog.set_default_size(800, 400)
 		fileDialog.set_local_only(False)
-		fileDialog.set_current_folder("~")
 		self.add_filters(fileDialog)
 
 		response = fileDialog.run()

@@ -16,13 +16,10 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 
 # INSTALL 
 ARCH Linux
+$ yaourt ocrdesktop
 
+Just the Depencys:
 $ pacman -S python tesseract tesseract-data-deu tesseract-data-eng python-pillow python-atspi libwnck3 gtk3
-
 $ yaourt python-tesserwrap
 
-Run "ocrdestkop"
 
-OR the offical package in the AUR
-
-$ yaourt ocrdesktop
