@@ -4,9 +4,9 @@
 
 """OCRdesktop"""
 
-__version__   = "0.9.86"
+__version__   = "0.9.90"
 __copyright__ = "Copyright (c) 2015 Chrys"
-__license__   = "LGPL"
+__license__   = "GPL"
 __authors__   = ["chrys"]
 __website__   = "https://github.com/chrys87/ocrdesktop"
 __appname__   = "OCRdesktop"
