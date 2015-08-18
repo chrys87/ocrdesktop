@@ -745,7 +745,7 @@ class OCRScreenReader():
 		self._sendToClipboard = False
 		self._hideGui = False
 		self._screenShotMode = 0 # 0 = Window; 1 = Desktop
-		self._macroFile = '/tmp/MyOCRMacro.ocrm'
+		self._macroFile = os.path.expanduser('~') + '/.activeOCRMacro.ocrm'
 		self._showHelp = False
 		self._debug = False
 		self._setCommandLineOptions()
@@ -826,7 +826,7 @@ class OCRMacroManager:
 		self._accelerators = None
 		self._grid = None
 		self._labelAutoClickExists = None
-		self._macroFile ='/tmp/MyOCRMacro.ocrm'
+		self._macroFile = os.path.expanduser('~') + '/.activeOCRMacro.ocrm'
 		self._gui = None
 		self._MacroFinished = False
 		self._debug = debug_p
