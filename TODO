@@ -1,17 +1,18 @@
 Features ready for implementation:
-- allow keyboard shortcuts in macro recorder (initial Done)
-  See https://people.gnome.org/~parente/pyatspi/doc/pyatspi.registry.Registry-class.html#registerKeystrokeListener
 - "Entry Dialog" for selecting Options OCR the window or just an area?
 - Make settings (like fontsize) saveable in gsettings or flatfile
   See http://www.micahcarrick.com/gsettings-python-gnome-3.html
 - Make it translateable _("bla")
 - Stabilization after finish features :)
+- ability to do different grayscale/ invert/ hard BlackWhite/ Dotted modes (maybe better ocr results) 
 
 Needs experimenting or info
 
 - it is possible to identify a open menu? so we could set a OCR area insteed screenshotting the window. 
 this will leed to more readable results in menus. if not maybe we could  range pixels left/right of the cursor and let the user select via entry window
 check the common Menue sizes
+
+- automatic Quality OCR Mode
 
 - do we know object is have under the cursor? No Chance via API but:
   We could guess! :)
@@ -24,3 +25,4 @@ check the common Menue sizes
   D end of the first or second line is fullscreenbutton
   QT is a Selected checkbox
   last line is Statusbar
+ 

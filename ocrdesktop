@@ -13,7 +13,9 @@ __appname__   = "OCRdesktop"
 __comments__  = "A accessibility tool for woring with inaccessible windows and dialogs"
 #Python Utils
 import os, sys, getopt, locale, time, re, _thread, shutil
+#PIL
 from PIL import Image
+from PIL import ImageOps
 
 #tesseract
 from tesserwrap import tesseract
@@ -31,34 +33,6 @@ from gi.repository import Gtk, Gdk, GObject, Wnck
 # AT-SPI
 import pyatspi
 
-KEY_CODE = {
-    '1': 10, '2': 11, '3': 12, '4': 13, '5': 14, '6': 15,
-    '7': 16, '8': 17, '9': 18, '0': 19, 'dash': 20, '=': 21,
-    'q': 24, 'w': 25, 'e': 26, 'r': 27, 't': 28, 'y': 29,
-    'u': 30, 'i': 31, 'o': 32, 'p': 33, '[': 34, ']': 35,
-    'a': 38, 's': 39, 'd': 40, 'f': 41, 'g': 42, 'h': 43,
-    'j': 44, 'k': 45, 'l': 46, ';': 47, 'z': 52, 'x': 53,
-    'c': 54, 'v': 55, 'b': 56, 'n': 57, 'm': 58, ',': 59,
-    '.': 60, '/': 61, '\'': 48, '\\': 51, '`': 49, '|': 52,
-    'esc': 9, 'back': 22, 'enter': 36, 'space': 65, 'tab': 23,
-    'ins': 118, 'del': 119, 'home': 110, 'end': 115, 'pgup': 112,
-    'pgdown': 117, 'up': 111, 'left': 113, 'right': 114, 'down': 116,
-    'f1': 67, 'f2': 68, 'f3': 69, 'f4': 70,
-    'f5': 71, 'f6': 72, 'f7': 73, 'f8': 74,
-    'f9': 75, 'f10': 76, 'f11': 95, 'f12': 96,
-    'alt': 64,
-    'alt_r': 105,
-    'ctrl': 37,
-    'ctrl_r': 108,
-    'shift': 50,
-    'shift_r': 62,
-    'super': 133,
-    'caps': 66,
-    'menu': 135,
-    'pause': 127,
-    'num_lock': 77,
-    'scroll_lock': 78,
-    }
 
 
 # here the class
@@ -142,6 +116,13 @@ class OCRNavigation(Gtk.Window):
 			print("save pixBuff /tmp/ocrpixBuff.bmp")
 		if (pixBuff != None):
 			self._img = self.pixbuf2image(pixBuff)
+			#self._img = ImageOps.grayscale(self._img) //graustufen
+			#self._img = ImageOps.invert(self._img) //invertiert
+			#self._img = self._img.convert('1') //dotted
+			#break into black and white on value
+			#lut = [255 if v > 200 else 0 for v in range(256)] #200 -> 128
+			#self._img = self._img.point(lut)
+			#break into black and white on value
 			if self._debug: # Debug code
 				self._img.save("/tmp/ocrScreenshot.png") 
 				print("save screenshot:/tmp/ocrScreenshot.png") 
@@ -315,14 +296,20 @@ class OCRNavigation(Gtk.Window):
 		if self._debug:
 			print("_onSendKey")
 		if self._debug:
-			print(event.type)
-			print(event.event_string)
+			print('Type:' + str(event.type))
+			print('String: ' + event.event_string)
+			print('ID: ' + str(event.id))
+			print('hw_code: ' + str(event.hw_code))
+			if event.type == pyatspi.KEY_PRESS:
+				macroFile = open('/home/chrys/events.txt', "a")
+				macroFile.write("'" + event.event_string + "':"  + str(event.hw_code) + ',\n')
+				macroFile.close()
 		if event.type == pyatspi.KEY_PRESS:
 			if event.event_string =='F4':
 				pyatspi.Registry.deregisterKeystrokeListener(self._onSendKey)
 				self._keyboardOverlayActive = False
 				self._setView(False)
-				return True
+				return False
 			eventTypeID = 0
 			
 		elif event.type == pyatspi.KEY_RELEASE:
@@ -330,7 +317,7 @@ class OCRNavigation(Gtk.Window):
 		elif event.type == pyatspi.KEY_PRESSRELEASE:
 			eventTypeID = 2		
 		self._macro._writeKeyboardToMacro(0, event.event_string, eventTypeID)
-		return True
+		return False
 		
 	def _sendKeyMode(self, widget):
 		if self._debug:
@@ -340,9 +327,6 @@ class OCRNavigation(Gtk.Window):
 		pyatspi.Registry.registerKeystrokeListener(self._onSendKey,mask=pyatspi.allModifiers(), kind=(pyatspi.KEY_PRESS,pyatspi.KEY_RELEASE,pyatspi.KEY_PRESSRELEASE))
 		if self._debug:
 			print("Keyboardlistener is registered")
-
-
-
 
 	def _createNavListDialog(self):
 		Gtk.Window.__init__(self, title="OCR")
@@ -1070,7 +1054,7 @@ class OCRMacroManager:
 		"""
 		if keyValue_p == 0:
 			if keyString_p != '':
-				keyValue_p = KEY_CODE[keyString_p.lower()]
+				keyValue_p = KEY_CODE[keyString_p]
 			else:
 				if self._debug:
 					print("invalid keyboard macro",keyValue_p,keyString_p)
@@ -1135,6 +1119,200 @@ class OCRMacroManager:
 #			self._cancel(True)
 #		if eventString == 'Return':
 #			self._leftClickButton.grab_focus()
+
+
+KEY_CODE = {
+	'¼':13,
+	'½':14,
+	'0':19,
+	'!':10,
+	'/':106,
+	'"':11,
+	'1':10,
+	'¹':10,
+	'§':12,
+	'$':13,
+	'%':14,
+	'¬':15,
+	'&':15,
+	'/':16,
+	'{':16,
+	'(':17,
+	'[':17,
+	')':18,
+	']':18,
+	'=':19,
+	'}':19,
+	'?':20,
+	'\\':20,
+	'2':11,
+	'²':11,
+	'@':24,
+	'€':26,
+	'¶':27,
+	'←':29,
+	'↓':30,
+	'→':31,
+	'3':12,
+	'³':12,
+	'~':35,
+	'*':35,
+	'+':35,
+	'':37,
+	'4':13,
+	'°':49,
+	'′':49,
+	"'":51,
+	'#':51,
+	'5':14,
+	'»':52,
+	'«':53,
+	'¢':54,
+	'„':55,
+	'“':56,
+	'”':57,
+	'µ':58,
+	',':59,
+	';':59,
+	'·':59,
+	':':60,
+	'.':60,
+	'…':60,
+	'_':61,
+	'-':61,
+	'–':61,
+	'6':15,
+	'*':63,
+	'7':16,
+	'7':79,
+	'8':17,
+	'-':82,
+	'+':86,
+	'':9,
+	'9':18,
+	'<':94,
+	'>':94,
+	'|':94,
+	'a':38,
+	'A':38,
+	'ä':48,
+	'Ä':48,
+	'Alt_L':64,
+	'b':56,
+	'B':56,
+	'BackSpace':22,
+	'c':54,
+	'C':54,
+	'Caps_Lock':66,
+	'd':40,
+	'D':40,
+	'đ':41,
+	'dead_acute':21,
+	'dead_cedilla':21,
+	'dead_circumflex':49,
+	'dead_diaeresis':34,
+	'dead_grave':21,
+	'Delete':119,
+	'Down':116,
+	'e':26,
+	'E':26,
+	'End':115,
+	'Escape':9,
+	'F10':76,
+	'F11':95,
+	'F12':96,
+	'F1':67,
+	'F2':68,
+	'F3':69,
+	'f':41,
+	'F':41,
+	'F4':70,
+	'F5':71,
+	'F6':72,
+	'F7':73,
+	'F8':74,
+	'F9':75,
+	'g':42,
+	'G':42,
+	'h':43,
+	'H':43,
+	'Home':110,
+	'i':31,
+	'I':31,
+	'Insert':118,
+	'ISO_Left_Tab':23,
+	'ISO_Level3_Shift':108,
+	'j':44,
+	'J':44,
+	'k':45,
+	'K':45,
+	'KP_Begin':84,
+	'KP_Delete':91,
+	'KP_Down':88,
+	'KP_End':87,
+	'KP_Enter':104,
+	'KP_Home':79,
+	'KP_Insert':90,
+	'KP_Left':83,
+	'KP_Next':89,
+	'KP_Page_Up':81,
+	'KP_Right':85,
+	'KP_Up':80,
+	'ł':25,
+	'l':46,
+	'L':46,
+	'Left':113,
+	'm':58,
+	'M':58,
+	'Menu':135,
+	'n':57,
+	'N':57,
+	'Num_Lock':77,
+	'o':32,
+	'O':32,
+	'ø':32,
+	'ö':47,
+	'Ö':47,
+	'p':33,
+	'P':33,
+	'Page_Down':117,
+	'Page_Up':112,
+	'Pause':127,
+	'q':24,
+	'Q':24,
+	'r':27,
+	'R':27,
+	'Return':36,
+	'Right':114,
+	's':39,
+	'S':39,
+	'Scroll_Lock':78,
+	'Shift_L':50,
+	'Shift_R':62,
+	'space':65,
+	'ß':20,
+	'Super_R':134,
+	't':28,
+	'T':28,
+	'ŧ':28,
+	'Tab':23,
+	'u':30,
+	'U':30,
+	'ü':34,
+	'Ü':34,
+	'Up':111,
+	'v':55,
+	'V':55,
+	'w':25,
+	'W':25,
+	'x':53,
+	'X':53,
+	'y':52,
+	'Y':52,
+	'z':29,
+	'Z':29,
+	'þ':33,
+	}
 
 if __name__ == "__main__":
 	Application = OCRScreenReader()
