@@ -190,8 +190,6 @@ class OCRNavigation(Gtk.Window):
 
 	def _fillOCRWordlist(self):
 		for OCRWord in self._OCRWords: # fill the list
-			#regexSpace = re.compile('[\s\t\r\n*]') #remove empty lines
-			#tmpOCRText = regexSpace.sub('',self._OCRText)
 			if int(OCRWord.confidence) != 0:
 				self._OCRWordList.append([OCRWord.value.decode("utf-8"),int((OCRWord.box[2] - OCRWord.box[0]) / 2 + OCRWord.box[0]),int((OCRWord.box[3] - OCRWord.box[1]) / 2 + OCRWord.box[1]),int(OCRWord.confidence)])
 
@@ -284,13 +282,15 @@ class OCRNavigation(Gtk.Window):
 		self._isRefreshing = False
 		
 	def _onSendKey(self, event):
+		eventTypeID = 0
+		
 		if self._debug:
 			print("_onSendKey")
-		if self._debug:
 			print('Type:' + str(event.type))
 			print('String: ' + event.event_string)
 			print('ID: ' + str(event.id))
 			print('hw_code: ' + str(event.hw_code))
+
 		if event.type == pyatspi.Atspi.EventType.KEY_PRESSED_EVENT:
 			if event.event_string =='F4':
 				self._keyboardOverlayActive = False
@@ -443,39 +443,6 @@ class OCRNavigation(Gtk.Window):
 		self._refreshContent()
 
 		self.connect("delete-event", Gtk.main_quit)
-		'''
-		self._closeButton = Gtk.Button("_Close")
-		self._closeButton.set_use_underline(True)
-		self._closeButton.connect("clicked", Gtk.main_quit)
-
-		self._viewButton = Gtk.Button("Toggle _View")
-		self._viewButton.set_use_underline(True)
-		self._viewButton.connect("clicked", self._toggleView)
-
-		self._leftClickButton = Gtk.Button("_Left Click")
-		self._leftClickButton.set_use_underline(True)
-		self._leftClickButton.connect("clicked", self._onLeftClick)
-
-		self._rightClickButton = Gtk.Button("_Right Click")
-		self._rightClickButton.set_use_underline(True)
-		self._rightClickButton.connect("clicked", self._onRightClick)
-
-		self._leftDoubleClickButton = Gtk.Button("_Double Click")
-		self._leftDoubleClickButton.set_use_underline(True)
-		self._leftDoubleClickButton.connect("clicked", self._onDoubleLeftClick)
-
-		self._middleClickButton = Gtk.Button("_Middle Click")
-		self._middleClickButton.set_use_underline(True)
-		self._middleClickButton.connect("clicked", self._onMiddleClick)
-
-		self._routeToPointButton = Gtk.Button("Route _To")
-		self._routeToPointButton.set_use_underline(True)
-		self._routeToPointButton.connect("clicked", self._routeToPoint)
-
-		self._saveToMacroButton = Gtk.CheckButton("Sa_ve as Preclick")
-		self._saveToMacroButton.set_use_underline(True)
-		self._saveToMacroButton.connect("toggled", self._setSaveToMacro)
-		'''
 		self.connect('key-release-event', self._onKeyRelease)
 		#self._textbuffer.connect("notify::cursor-position", self._onCursorTextPositionChanged)
 		#self._tree.connect("notify::cursor-position", self._onCursorTreePositionChanged)
@@ -484,13 +451,6 @@ class OCRNavigation(Gtk.Window):
 		self._grid.attach(self._menubar,0,0,10,1)
 		self._grid.attach(self._keyboardOverlayLabel, 0, 1, 10, 1)
 		self._grid.attach(self._font_button, 0, 11, 3, 1)
-#		self._grid.attach(self._saveToMacroButton, 1, 11, 1, 1)
-#		self._grid.attach(self._leftClickButton, 2, 11, 1, 1)
-#		self._grid.attach(self._leftDoubleClickButton, 3, 11, 1, 1)
-#		self._grid.attach(self._rightClickButton, 4, 11, 1, 1)
-#		self._grid.attach(self._middleClickButton, 5, 11, 1, 1)
-#		self._grid.attach(self._routeToPointButton, 6, 11, 1, 1)
-#		self._grid.attach(self._closeButton, 7, 11, 1, 1)
 		self.add(self._grid)
 
 	def _onCursorTextPositionChanged(self, widget, event):
