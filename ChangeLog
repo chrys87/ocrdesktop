@@ -7,7 +7,8 @@
 	"m,xpos,ypos,TypeOfClick"
   k = keyboard (experimental)
 	"k,KeyCode,KeyValue,event"
-- initial recording of keyboard macros 
+- initial recording of keyboard macros
+- finalize recording of keyboard macros and consume key 
 - use pyatspi directly, remove orca depency
 - BUG pressing cancle in macro recorder provides a endles loop
 - Overall Clearups and Bugfixes

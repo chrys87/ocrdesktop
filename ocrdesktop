@@ -160,8 +160,7 @@ class OCRNavigation(Gtk.Window):
 		if self._screenShotMode == 0:
 			Ok = self._screenShotWindow()
 		elif self._screenShotMode == 1:
-			Ok = self._screenShotDesktop()
-			
+			Ok = self._screenShotDesktop()		
 		return Ok
 				
 	def _ocrImage(self):
@@ -203,10 +202,6 @@ class OCRNavigation(Gtk.Window):
 			widget.add_accelerator(signal, self._accelerators, key, mod, Gtk.AccelFlags.VISIBLE)
 
 	def on_font_set(self, widget):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		font_description = widget.get_font_desc()
 		self._textbox.modify_font(font_description)
 		
@@ -216,10 +211,6 @@ class OCRNavigation(Gtk.Window):
 	def _refreshContent(self):
 		if self._isRefreshing == True:
 			print("refresh already running")
-			return
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
 			return
 		self._isRefreshing = True
 		if self._debug:
@@ -300,31 +291,28 @@ class OCRNavigation(Gtk.Window):
 			print('String: ' + event.event_string)
 			print('ID: ' + str(event.id))
 			print('hw_code: ' + str(event.hw_code))
-			if event.type == pyatspi.KEY_PRESS:
-				macroFile = open('/home/chrys/events.txt', "a")
-				macroFile.write("'" + event.event_string + "':"  + str(event.hw_code) + ',\n')
-				macroFile.close()
-		if event.type == pyatspi.KEY_PRESS:
+		if event.type == pyatspi.Atspi.EventType.KEY_PRESSED_EVENT:
 			if event.event_string =='F4':
-				pyatspi.Registry.deregisterKeystrokeListener(self._onSendKey)
 				self._keyboardOverlayActive = False
 				self._setView(False)
-				return False
+				pyatspi.Registry.deregisterKeystrokeListener(self._onSendKey)
+				if self._debug:
+					print('deregisterKeystrokeListener')
+				return True
 			eventTypeID = 0
 			
-		elif event.type == pyatspi.KEY_RELEASE:
+		elif event.type == pyatspi.Atspi.EventType.KEY_RELEASED_EVENT:
 			eventTypeID = 1
-		elif event.type == pyatspi.KEY_PRESSRELEASE:
-			eventTypeID = 2		
+
 		self._macro._writeKeyboardToMacro(0, event.event_string, eventTypeID)
-		return False
+		return True
 		
 	def _sendKeyMode(self, widget):
+		self._keyboardOverlayActive = True
 		if self._debug:
 			print("sendKeyMode")
-		self._keyboardOverlayActive = True
+		pyatspi.Registry.registerKeystrokeListener(self._onSendKey,mask=pyatspi.allModifiers(), kind=(pyatspi.KEY_PRESS,pyatspi.KEY_RELEASE,pyatspi.KEY_PRESSRELEASE), synchronous=True, preemptive=True)
 		self._setView(False)
-		pyatspi.Registry.registerKeystrokeListener(self._onSendKey,mask=pyatspi.allModifiers(), kind=(pyatspi.KEY_PRESS,pyatspi.KEY_RELEASE,pyatspi.KEY_PRESSRELEASE))
 		if self._debug:
 			print("Keyboardlistener is registered")
 
@@ -359,7 +347,7 @@ class OCRNavigation(Gtk.Window):
 		self.menu_ocrdesktop.append(self.item_close)
 		self.item_toggleview.connect("activate", self._onSetView,True)
 		self.item_retry.connect("activate", self._onRefreshContent)
-		self.item_clipboard.connect("activate", self._onSetTextToClipboard, self._OCRText)
+		self.item_clipboard.connect("activate", self._onSetTextToClipboard)
 		self.item_close.connect("activate", Gtk.main_quit)
 		
 		self.menu_interact = Gtk.Menu()
@@ -494,8 +482,8 @@ class OCRNavigation(Gtk.Window):
 		
 
 		self._grid.attach(self._menubar,0,0,10,1)
-		self._grid.attach(self._font_button, 0, 11, 1, 3)
-		self._grid.attach(self._keyboardOverlayLabel, 1, 6, 10, 1)
+		self._grid.attach(self._keyboardOverlayLabel, 0, 1, 10, 1)
+		self._grid.attach(self._font_button, 0, 11, 3, 1)
 #		self._grid.attach(self._saveToMacroButton, 1, 11, 1, 1)
 #		self._grid.attach(self._leftClickButton, 2, 11, 1, 1)
 #		self._grid.attach(self._leftDoubleClickButton, 3, 11, 1, 1)
@@ -524,10 +512,6 @@ class OCRNavigation(Gtk.Window):
 		pass
 
 	def _setSaveToMacro(self, widget):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		self._saveToMacro = widget.get_active()
 
 	def setFocus(self):
@@ -548,10 +532,6 @@ class OCRNavigation(Gtk.Window):
 		Gtk.main()
 
 	def _onRunAboutDialog(self,widget,window):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		dialog = Gtk.AboutDialog(window)
 		dialog.set_authors(__authors__)
 		dialog.set_website(__website__)
@@ -567,29 +547,27 @@ class OCRNavigation(Gtk.Window):
 		self._setView(Toggle)
 			
 	def _setView(self, Toggle):
-		if self._keyboardOverlayActive == True:
-			self._scrolledWindowText.hide()
-			self._scrolledWindowTree.hide()
+		
+		self._scrolledWindowTree.hide()	
+		self._scrolledWindowText.hide()	
+		self._keyboardOverlayLabel.hide()
+		
+		if self._keyboardOverlayActive:
 			self._keyboardOverlayLabel.show()
-			self._keyboardOverlayLabel.grab_focus()
-			if self._debug:
-				print("keyboardOverlayActive")
+			self.setFocus()
 			return
-		else:
-			self._keyboardOverlayLabel.hide()
-		self.setFocus()
-
-		if self._viewMode == 1:
-			if Toggle:
+			
+		if Toggle:
+			if self._viewMode == 0:
+				self._viewMode = 1
+			elif self._viewMode == 1:
 				self._viewMode = 0
-			self._scrolledWindowText.hide()
+		
+		if self._viewMode == 1:	
 			self._scrolledWindowTree.show()
 			self._tree.grab_focus()
-		else:
-			if Toggle:
-				self._viewMode = 1
+		elif self._viewMode == 0:
 			self._scrolledWindowText.show()
-			self._scrolledWindowTree.hide()
 			self._textbox.grab_focus()
 
 
@@ -612,50 +590,30 @@ class OCRNavigation(Gtk.Window):
 			GTKmainIsRunning = False
 
 	def _routeToPoint(self, widget):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		self.setFocus()
 		self.hide()
 		xpos, ypos = self._getSelectedEntry()
 		_thread.start_new_thread( self._threadrouteToPoint, (xpos,ypos, ) )
 
 	def _onRightClick(self, widget):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
 		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b3c", ) )	
 
 	def _onLeftClick(self, widget):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
 		_thread.start_new_thread( self._threadDoClick, (xpos,ypos, "b1c" ) )		
 
 	def _onDoubleLeftClick(self, widget):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
 		_thread.start_new_thread( self._threadDoClick, (xpos,ypos,"b1d", ) )	
 
 	def _onMiddleClick(self, widget):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
@@ -670,10 +628,6 @@ class OCRNavigation(Gtk.Window):
 		self._cancel()
 		
 	def _onRunMacro(self, widget):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
 		if self._macro._macroExists():
 			self.hide()
 			_thread.start_new_thread( self._threadRunMacro, () )
@@ -698,14 +652,15 @@ class OCRNavigation(Gtk.Window):
 			pyatspi.Registry.generateMouseEvent(xpos,ypos,mouseEvent)
 		self._cancel()
 
-	def _onSetTextToClipboard(self, widget, text_p):
-		if self._keyboardOverlayActive == True:
-			if self._debug:
-				print("keyboardOverlayActive")
-			return
-		self._setTextToClipboard(text_p)
+	def _onSetTextToClipboard(self, widget):
+		self._setTextToClipboard(self._OCRText)
 
 	def _setTextToClipboard(self, text_p):
+		if self._debug:
+			print("----_setTextToClipboard Start--")
+			print(text_p)
+			print("----_setTextToClipboard End----")
+			
 		ClipboardObj = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
 		ClipboardObj.set_text(text_p, -1)
 		ClipboardObj.store()
