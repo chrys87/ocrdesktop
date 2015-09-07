@@ -334,7 +334,7 @@ class OCRNavigation(Gtk.Window):
 		self.add_accelerator(self.item_retry, "F5","activate")
 		self.item_clipboard = Gtk.MenuItem("Send to _Clipboard")
 		self.item_clipboard.set_use_underline(True)
-		self.add_accelerator(self.item_clipboard, "<Control>c","activate")
+		self.add_accelerator(self.item_clipboard, "<Control>b","activate")
 		self.item_font = Gtk.MenuItem("_Font")
 		self.item_font.set_use_underline(True)
 		self.item_close = Gtk.MenuItem("_Close")
