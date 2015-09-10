@@ -343,6 +343,19 @@ class OCRNavigation(Gtk.Window):
 		if self._debug:
 			print("Keyboardlistener is registered")
 
+	def _toggleGrayscaleImg(self, widget):
+		self._grayscaleImg = widget.get_active()
+		if not self._grayscaleImg:
+			self.item_barrierbw.set_active(False)
+
+	def _toggleInvertImg(self, widget):
+		self._invertImg = widget.get_active()
+
+	def _toggleBlackWhiteImg(self, widget):
+		self._blackWhiteImg = widget.get_active()
+		if self._blackWhiteImg:
+			self.item_grayscale.set_active(True)
+
 	def _createNavListDialog(self):
 		Gtk.Window.__init__(self, title="OCR")
 		self.set_default_size(700,700)
@@ -356,6 +369,26 @@ class OCRNavigation(Gtk.Window):
 		self.item_toggleview = Gtk.MenuItem("Toggle _View")
 		self.item_toggleview.set_use_underline(True)
 		self.add_accelerator(self.item_toggleview, "<Control>v","activate")
+		self.item_ocroptions = Gtk.MenuItem("_OCR Options")
+		self.item_ocroptions.set_use_underline(True)
+		self.option_sub_menu = Gtk.Menu()
+		self.item_ocroptions.set_submenu(self.option_sub_menu)
+		self.item_invert = Gtk.CheckMenuItem("_Invert")
+		self.item_invert.set_use_underline(True)
+		self.item_grayscale = Gtk.CheckMenuItem("_Grayscale")
+		self.item_grayscale.set_use_underline(True)
+		self.item_barrierbw = Gtk.CheckMenuItem("_Barrier Black White")
+		self.item_barrierbw.set_use_underline(True)
+		self.option_sub_menu.append(self.item_invert)
+		self.option_sub_menu.append(self.item_grayscale)
+		self.option_sub_menu.append(self.item_barrierbw)
+		self.item_invert.set_active(self._invertImg)
+		self.item_grayscale.set_active(self._grayscaleImg)
+		self.item_barrierbw.set_active(self._blackWhiteImg)
+		self.item_invert.connect("activate", self._toggleInvertImg)
+		self.item_grayscale.connect("activate", self._toggleGrayscaleImg)
+		self.item_barrierbw.connect("activate", self._toggleBlackWhiteImg)
+		
 		self.item_retry = Gtk.MenuItem("_Retry OCR")
 		self.item_retry.set_use_underline(True)
 		self.add_accelerator(self.item_retry, "F5","activate")
@@ -368,6 +401,7 @@ class OCRNavigation(Gtk.Window):
 		self.add_accelerator(self.item_close, "<Control>q","activate")
 		self.item_close.set_use_underline(True)
 		self.menu_ocrdesktop.append(self.item_toggleview)
+		self.menu_ocrdesktop.append(self.item_ocroptions)
 		self.menu_ocrdesktop.append(self.item_retry)
 		self.menu_ocrdesktop.append(self.item_clipboard)
 		#self.menu_ocrdesktop.append(self.item_font)
