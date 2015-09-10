@@ -206,8 +206,9 @@ class OCRNavigation(Gtk.Window):
 		for OCRWord in self._OCRWords: # fill the list
 			if int(OCRWord.confidence) != 0:
 				self._OCRWordList.append([OCRWord.value.decode("utf-8"),
-				  int((OCRWord.box[3] - OCRWord.box[1]) / 3 * 0.77),
-				  str('unknown yet'),
+				  round((OCRWord.box[3] - OCRWord.box[1]) / 3 * 0.78,0),
+				  'unknown',
+				  'text',
 				  int((OCRWord.box[2] - OCRWord.box[0]) / 2 + OCRWord.box[0]),
 				  int((OCRWord.box[3] - OCRWord.box[1]) / 2 + OCRWord.box[1]),
 				  int(OCRWord.confidence)])
@@ -279,12 +280,13 @@ class OCRNavigation(Gtk.Window):
 		cols.extend([GObject.TYPE_STRING])
 		cols.extend([GObject.TYPE_INT])	
 		cols.extend([GObject.TYPE_STRING])
+		cols.extend([GObject.TYPE_STRING])
 		cols.extend([GObject.TYPE_INT])		
 		cols.extend([GObject.TYPE_INT])
 		cols.extend([GObject.TYPE_INT])
 		model = Gtk.ListStore(*cols)
 		self._tree.set_model(model)
-		columnHeaders = ['OCR Text','Fontsize','Color','X Position','Y Position','Confidence']
+		columnHeaders = ['OCR Text','Fontsize','Color','Object','X Position','Y Position','Confidence']
 		
 		cell = Gtk.CellRendererText()
 		column = Gtk.TreeViewColumn("OCR Text", cell, text=0)
@@ -303,9 +305,9 @@ class OCRNavigation(Gtk.Window):
 			i = 0
 			for cell in row:
 				i = i + 1
-				if i == 4:
-					cell = cell / self._scaleFactor + self._offsetXpos
 				if i == 5:
+					cell = cell / self._scaleFactor + self._offsetXpos
+				if i == 6:
 					cell = cell / self._scaleFactor + self._offsetYpos
 #				if i == 1:
 				model.set_value(rowIter, i, cell)

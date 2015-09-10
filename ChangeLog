@@ -28,3 +28,6 @@
 - parameter -i invert image before OCR
 - parameter -b break just into hard black or white (not grayscale) (good fore OCR neon coloor text
 - parameter -t 0 - 255 set the line for breaking into black and white (200 is a good value)
+invert, grayscale and black white available in the UI. F5 will respect this
+approxiimate fontsize in detailview
+
