@@ -37,7 +37,7 @@ import pyatspi
 
 # here the class
 class OCRNavigation(Gtk.Window):
-	def __init__(self, debug_p = False):
+	def __init__(self, debug_p = False, languageCode = 'eng'):
 		self._debug = debug_p
 		self._tree = None
 		self._textbox = None
@@ -67,13 +67,15 @@ class OCRNavigation(Gtk.Window):
 		self._OCRWordList = []
 		self._OCRText = ''
 		self._img = None
+		self._modifiedImg = None
 		self._scaleFactor = 3
 		self._offsetXpos = 0
 		self._offsetYpos = 0
 		self.GTKmainIsRunning = False
 		locale.setlocale(locale.LC_NUMERIC, 'C') #needed by tesseract in non english languages 
 		self._macro = OCRMacroManager()
-		self._tess = tesseract("/usr/share")
+		self._languageCode = languageCode
+		self._tess = tesseract("/usr/share", self._languageCode)
 		self._isRefreshing = False
 		
 	def _setHideGui(self, hideGui_p):
@@ -116,13 +118,6 @@ class OCRNavigation(Gtk.Window):
 			print("save pixBuff /tmp/ocrpixBuff.bmp")
 		if (pixBuff != None):
 			self._img = self.pixbuf2image(pixBuff)
-			#self._img = ImageOps.grayscale(self._img) //graustufen
-			#self._img = ImageOps.invert(self._img) //invertiert
-			#self._img = self._img.convert('1') //dotted
-			#break into black and white on value
-			#lut = [255 if v > 200 else 0 for v in range(256)] #200 -> 128
-			#self._img = self._img.point(lut)
-			#break into black and white on value
 			if self._debug: # Debug code
 				self._img.save("/tmp/ocrScreenshot.png") 
 				print("save screenshot:/tmp/ocrScreenshot.png") 
@@ -164,10 +159,11 @@ class OCRNavigation(Gtk.Window):
 		return Ok
 				
 	def _ocrImage(self):
-		if self._img is None:
+		if self._modifiedImg is None:
 			return False
+		self._tess.clear()
 				
-		self._OCRText = self._tess.ocr_image(self._img)
+		self._OCRText = self._tess.ocr_image(self._modifiedImg)
 		regexSpace = re.compile('[^\S\r\n]{2,}') #remove double spaces
 #		regexSpace = re.compile('[\s]{2,}') #remove double spaces
 		self._OCRText = regexSpace.sub(' ',self._OCRText)
@@ -205,6 +201,16 @@ class OCRNavigation(Gtk.Window):
 		
 	def _onRefreshContent(self, widget):
 		self._refreshContent()
+	
+	def _transformImg(self):
+		self._modifiedImg = self._img
+   			#self._modifiedImg = ImageOps.grayscale(self._modifiedImg) //graustufen
+			#self._modifiedImg = ImageOps.invert(self._modifiedImg) //invertiert
+			#self._modifiedImg = self._modifiedImg.convert('1') //dotted
+			#break into black and white on value
+			#lut = [255 if v > 200 else 0 for v in range(256)] #200 -> 128
+			#self._modifiedImg = self._modifiedImg.point(lut)
+			#break into black and white on value
 		
 	def _refreshContent(self):
 		if self._isRefreshing == True:
@@ -220,7 +226,7 @@ class OCRNavigation(Gtk.Window):
 		self._scrolledWindowTree = None
 		self._scrolledWindowText = None
 		self._textbox = None
-		
+		self._transformImg()
 		self._ocrImage()
 
 		self._scrolledWindowText = Gtk.ScrolledWindow()
@@ -647,6 +653,7 @@ class OCRScreenReader():
 		self._macroFile = os.path.expanduser('~') + '/.activeOCRMacro.ocrm'
 		self._showHelp = False
 		self._debug = False
+		self._languageCode = 'eng'
 		self._setCommandLineOptions()
 
 		if self._showHelp:
@@ -662,8 +669,7 @@ class OCRScreenReader():
 				self._macro._RunMacro()
 
 		#NAVIGATION
-		self._Navigation = OCRNavigation(self._debug)
-
+		self._Navigation = OCRNavigation(self._debug, self._languageCode)
 		self._Navigation._setSendToClipboard(self._sendToClipboard)
 		self._Navigation._setScreenShotMode(self._screenShotMode)
 		self._Navigation._setHideGui(self._hideGui)
@@ -681,7 +687,7 @@ class OCRScreenReader():
 		#FUNCTIONS
 	def _setCommandLineOptions(self):
 		try:
-			myopts, args = getopt.getopt(sys.argv[1:],"hvndcm:")
+			myopts, args = getopt.getopt(sys.argv[1:],"hl:vndcm:")
 			###############################
 			# o == option
 			# a == argument passed to the o
@@ -694,6 +700,8 @@ class OCRScreenReader():
 					self._screenShotMode = 1
 				elif o == '-c':
 					self._sendToClipboard = True
+				elif o == '-l':
+					self._languageCode = a
 				elif o == '-m':
 					self._macroFile = a
 				elif o == '-n':
@@ -705,8 +713,9 @@ class OCRScreenReader():
 
 	def _printHelp(self):
 		print(__version__)
-		print("ocrdesktop -h -p -n -d -c -m")
+		print("ocrdesktop -h -l -p -n -d -c -m")
 		print("-h		Print help with start")
+		print("-l <lang>        set the OCR language default=eng")
 		print("-n		hide GUI  (use with -c or -m")
 		print("-v		print debug messages")
 		print("-d		OCR the Destkop")

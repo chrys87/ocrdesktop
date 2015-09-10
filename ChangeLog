@@ -23,4 +23,4 @@
 - Set default filename in Save As
 - About Dialog
 - Retry OCR <F5> (did the OCR again with the current screenshot for hopfully better results)
-
+- parameter -l <languagecode> for specifieing the language (default is eng)
