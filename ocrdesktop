@@ -206,8 +206,8 @@ class OCRNavigation(Gtk.Window):
 		for OCRWord in self._OCRWords: # fill the list
 			if int(OCRWord.confidence) != 0:
 				self._OCRWordList.append([OCRWord.value.decode("utf-8"),
-				  int((OCRWord.box[3] - OCRWord.box[1]) / 3 * 0.8),
-				  str('unknown'),
+				  int((OCRWord.box[3] - OCRWord.box[1]) / 3 * 0.77),
+				  str('unknown yet'),
 				  int((OCRWord.box[2] - OCRWord.box[0]) / 2 + OCRWord.box[0]),
 				  int((OCRWord.box[3] - OCRWord.box[1]) / 2 + OCRWord.box[1]),
 				  int(OCRWord.confidence)])
