@@ -1,4 +1,4 @@
-0.9.30
+1.00
 - make fontsize/ fontfamiliy changeable 
 - different types of macros
   c = command ( for now wie have the delay command)
@@ -24,3 +24,7 @@
 - About Dialog
 - Retry OCR <F5> (did the OCR again with the current screenshot for hopfully better results)
 - parameter -l <languagecode> for specifieing the language (default is eng)
+- parameter -g grayscale image before OCR
+- parameter -i invert image before OCR
+- parameter -b break just into hard black or white (not grayscale) (good fore OCR neon coloor text
+- parameter -t 0 - 255 set the line for breaking into black and white (200 is a good value)

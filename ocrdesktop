@@ -4,7 +4,7 @@
 
 """OCRdesktop"""
 
-__version__   = "0.9.90"
+__version__   = "0.9.95"
 __copyright__ = "Copyright (c) 2015 Chrys"
 __license__   = "GPL"
 __authors__   = ["chrys"]
@@ -37,7 +37,7 @@ import pyatspi
 
 # here the class
 class OCRNavigation(Gtk.Window):
-	def __init__(self, debug_p = False, languageCode = 'eng'):
+	def __init__(self, debug_p = False):
 		self._debug = debug_p
 		self._tree = None
 		self._textbox = None
@@ -68,22 +68,41 @@ class OCRNavigation(Gtk.Window):
 		self._OCRText = ''
 		self._img = None
 		self._modifiedImg = None
+		self._grayscaleImg = False
+		self._invertImg = False
+		self._blackWhiteImg = False
+		self._blackWhiteImgValue = 200
 		self._scaleFactor = 3
 		self._offsetXpos = 0
 		self._offsetYpos = 0
 		self.GTKmainIsRunning = False
 		locale.setlocale(locale.LC_NUMERIC, 'C') #needed by tesseract in non english languages 
 		self._macro = OCRMacroManager()
-		self._languageCode = languageCode
-		self._tess = tesseract("/usr/share", self._languageCode)
+		self._languageCode = 'eng'
+		self._tess = None
 		self._isRefreshing = False
 		
-	def _setHideGui(self, hideGui_p):
+	def _setHideGui(self, hideGui_p = False):
 		self.hideGui = hideGui_p
+
+	def _setlanguageCode(self, languageCode_p = 'eng'):
+		self._languageCode = languageCode_p
 		
-	def _setSendToClipboard(self, sendToClipboard_p):
+	def _setGrayscaleImg(self, grayscaleImg_p = False):
+		self._grayscaleImg = grayscaleImg_p
+
+	def _setInvertImg(self, invertImg_p = False):
+		self._invertImg = invertImg_p
+
+	def _setBlackWhiteImg(self, blackWhiteImg_p = False):
+		self._blackWhiteImg = blackWhiteImg_p
+
+	def _setBlackWhiteImgValue(self, blackWhiteImgValue_p = 200):
+		self._blackWhiteImgValue = blackWhiteImgValue_p
+
+	def _setSendToClipboard(self, sendToClipboard_p = False):
 		self._sendToClipboard = sendToClipboard_p
-		
+	
 	def _setScreenShotMode(self, screenShotMode_p):
 		self._screenShotMode = screenShotMode_p
 
@@ -161,11 +180,10 @@ class OCRNavigation(Gtk.Window):
 	def _ocrImage(self):
 		if self._modifiedImg is None:
 			return False
-		self._tess.clear()
+		self._tess = tesseract("/usr/share", self._languageCode)
 				
 		self._OCRText = self._tess.ocr_image(self._modifiedImg)
 		regexSpace = re.compile('[^\S\r\n]{2,}') #remove double spaces
-#		regexSpace = re.compile('[\s]{2,}') #remove double spaces
 		self._OCRText = regexSpace.sub(' ',self._OCRText)
 		regexSpace = re.compile('\n\s*\n') #remove empty lines
 		self._OCRText = regexSpace.sub('\n',self._OCRText)
@@ -204,13 +222,16 @@ class OCRNavigation(Gtk.Window):
 	
 	def _transformImg(self):
 		self._modifiedImg = self._img
-   			#self._modifiedImg = ImageOps.grayscale(self._modifiedImg) //graustufen
-			#self._modifiedImg = ImageOps.invert(self._modifiedImg) //invertiert
-			#self._modifiedImg = self._modifiedImg.convert('1') //dotted
-			#break into black and white on value
-			#lut = [255 if v > 200 else 0 for v in range(256)] #200 -> 128
-			#self._modifiedImg = self._modifiedImg.point(lut)
-			#break into black and white on value
+		if self._invertImg:
+			self._modifiedImg = ImageOps.invert(self._modifiedImg)
+		if self._grayscaleImg:
+			self._modifiedImg = ImageOps.grayscale(self._modifiedImg)
+		if self._blackWhiteImg:
+			lut = [255 if v > self._blackWhiteImgValue else 0 for v in range(256)]
+			self._modifiedImg = self._modifiedImg.point(lut)
+		if self._debug: # Debug code
+			self._modifiedImg.save("/tmp/ocrScreenshotTransformed.png")
+			print("save scaled screenshot:/tmp/ocrScreenshotTransformed.png")			
 		
 	def _refreshContent(self):
 		if self._isRefreshing == True:
@@ -654,6 +675,10 @@ class OCRScreenReader():
 		self._showHelp = False
 		self._debug = False
 		self._languageCode = 'eng'
+		self._grayscaleImg = False
+		self._invertImg = False
+		self._blackWhiteImg = False
+		self._blackWhiteImgValue = 200
 		self._setCommandLineOptions()
 
 		if self._showHelp:
@@ -669,7 +694,12 @@ class OCRScreenReader():
 				self._macro._RunMacro()
 
 		#NAVIGATION
-		self._Navigation = OCRNavigation(self._debug, self._languageCode)
+		self._Navigation = OCRNavigation(self._debug)
+		self._Navigation._setlanguageCode(self._languageCode)
+		self._Navigation._setGrayscaleImg(self._grayscaleImg)
+		self._Navigation._setInvertImg(self._invertImg)
+		self._Navigation._setBlackWhiteImg(self._blackWhiteImg)
+		self._Navigation._setBlackWhiteImgValue(self._blackWhiteImgValue)
 		self._Navigation._setSendToClipboard(self._sendToClipboard)
 		self._Navigation._setScreenShotMode(self._screenShotMode)
 		self._Navigation._setHideGui(self._hideGui)
@@ -687,7 +717,7 @@ class OCRScreenReader():
 		#FUNCTIONS
 	def _setCommandLineOptions(self):
 		try:
-			myopts, args = getopt.getopt(sys.argv[1:],"hl:vndcm:")
+			myopts, args = getopt.getopt(sys.argv[1:],"hl:vndcgibt:m:")
 			###############################
 			# o == option
 			# a == argument passed to the o
@@ -698,6 +728,15 @@ class OCRScreenReader():
 					print('Debugmode ON')
 				elif o == '-d':
 					self._screenShotMode = 1
+				elif o == '-g':
+						self._grayscaleImg = True
+				elif o == '-i':
+					self._invertImg = True
+				elif o == '-b':
+					self._grayscaleImg = True
+					self._blackWhiteImg = True
+				elif o == '-t':
+					self._blackWhiteImgValue = int(a)
 				elif o == '-c':
 					self._sendToClipboard = True
 				elif o == '-l':
@@ -713,13 +752,17 @@ class OCRScreenReader():
 
 	def _printHelp(self):
 		print(__version__)
-		print("ocrdesktop -h -l -p -n -d -c -m")
+		print("ocrdesktop -h -l -p -n -d -c -i -g -b -t -m")
 		print("-h		Print help with start")
 		print("-l <lang>        set the OCR language default=eng")
 		print("-n		hide GUI  (use with -c or -m")
 		print("-v		print debug messages")
 		print("-d		OCR the Destkop")
 		print("-c		Send to Clipboard")
+		print("-i       Invert the picture colors")
+		print("-g       Grayscale picture")
+		print("-b       break into hard black and white")
+		print("-t       the value for braking into black and white (-b) 0 (black) - 255 (white)")
 		print("-m <MacroFile>	run a macro before starting.")	
 		self._showHelp = True				
 
