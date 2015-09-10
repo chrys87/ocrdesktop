@@ -205,7 +205,12 @@ class OCRNavigation(Gtk.Window):
 	def _fillOCRWordlist(self):
 		for OCRWord in self._OCRWords: # fill the list
 			if int(OCRWord.confidence) != 0:
-				self._OCRWordList.append([OCRWord.value.decode("utf-8"),int((OCRWord.box[2] - OCRWord.box[0]) / 2 + OCRWord.box[0]),int((OCRWord.box[3] - OCRWord.box[1]) / 2 + OCRWord.box[1]),int(OCRWord.confidence)])
+				self._OCRWordList.append([OCRWord.value.decode("utf-8"),
+				  int((OCRWord.box[3] - OCRWord.box[1]) / 3 * 0.8),
+				  str('unknown'),
+				  int((OCRWord.box[2] - OCRWord.box[0]) / 2 + OCRWord.box[0]),
+				  int((OCRWord.box[3] - OCRWord.box[1]) / 2 + OCRWord.box[1]),
+				  int(OCRWord.confidence)])
 
 	def add_accelerator(self, widget, accelerator, signal="activate"):
 		"""Adds a keyboard shortcut"""
@@ -272,12 +277,14 @@ class OCRNavigation(Gtk.Window):
 
 		cols = [GObject.TYPE_STRING]
 		cols.extend([GObject.TYPE_STRING])
-		cols.extend([GObject.TYPE_INT])
+		cols.extend([GObject.TYPE_INT])	
+		cols.extend([GObject.TYPE_STRING])
+		cols.extend([GObject.TYPE_INT])		
 		cols.extend([GObject.TYPE_INT])
 		cols.extend([GObject.TYPE_INT])
 		model = Gtk.ListStore(*cols)
 		self._tree.set_model(model)
-		columnHeaders = ['OCR Text','X Position','Y Position','Confidence']
+		columnHeaders = ['OCR Text','Fontsize','Color','X Position','Y Position','Confidence']
 		
 		cell = Gtk.CellRendererText()
 		column = Gtk.TreeViewColumn("OCR Text", cell, text=0)
@@ -296,11 +303,20 @@ class OCRNavigation(Gtk.Window):
 			i = 0
 			for cell in row:
 				i = i + 1
-				if i == 2:
+				if i == 4:
 					cell = cell / self._scaleFactor + self._offsetXpos
-				if i == 3:
+				if i == 5:
 					cell = cell / self._scaleFactor + self._offsetYpos
+#				if i == 1:
 				model.set_value(rowIter, i, cell)
+#					i = i + 1
+#					cell = 12
+#					model.set_value(rowIter, i, cell)
+#					i = i + 1
+#					cell = 'black'
+#					model.set_value(rowIter, i, cell)
+#				else:
+#					model.set_value(rowIter, i, cell)
 
 		self._tree.set_search_column(1)
 		self._grid.attach(self._scrolledWindowTree, 0, 1, 10, 10)
@@ -358,7 +374,7 @@ class OCRNavigation(Gtk.Window):
 
 	def _createNavListDialog(self):
 		Gtk.Window.__init__(self, title="OCR")
-		self.set_default_size(700,700)
+		self.set_default_size(700,800)
 		self._grid = Gtk.Grid()
 	
 		self._accelerators = Gtk.AccelGroup()
@@ -575,8 +591,9 @@ class OCRNavigation(Gtk.Window):
 		
 		if self._keyboardOverlayActive:
 			self._keyboardOverlayLabel.show()
-			self.setFocus()
 			return
+
+		self.setFocus()
 			
 		if Toggle:
 			if self._viewMode == 0:
