@@ -42,12 +42,6 @@ class OCRNavigation(Gtk.Window):
 		self._tree = None
 		self._textbox = None
 		self._textbuffer = None
-		self._closeButton = None
-		self._rightClickButton = None
-		self._leftClickButton = None
-		self._leftDoubleClickButton = None	
-		self._middleClickButton = None
-		self._routeToPointButton = None
 		self._saveToMacroButton = None
 		self._viewButton = None
 		self._viewMode = 0
