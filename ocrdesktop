@@ -4,7 +4,7 @@
 
 """OCRdesktop"""
 
-__version__   = "0.9.95"
+__version__   = "0.9.96"
 __copyright__ = "Copyright (c) 2015 Chrys"
 __license__   = "GPL"
 __authors__   = ["chrys"]
@@ -639,7 +639,7 @@ class OCRNavigation(Gtk.Window):
 		self.setFocus()
 		xpos, ypos = self._getSelectedEntry()
 		self.hide()
-		_thread.start_new_thread( self._threadDoClick, (xpos,ypos, "b1c" ) )		
+		_thread.start_new_thread( self._threadDoClick, (xpos,ypos, "b1c", ) )		
 
 	def _onDoubleLeftClick(self, widget):
 		self.setFocus()
@@ -677,13 +677,12 @@ class OCRNavigation(Gtk.Window):
 		self._macro._threadRunMacro()	
 		self._cancel()
 
-	def _threadDoClick(self, xpos=1,ypos=1,mouseEvent='b1c',delay=0.8, posRelation = "abs"):
+	def _threadDoClick(self, xpos=1,ypos=1,mouseEvent='b1c',delay=0.8):
 		if self._saveToMacro:
 			self._macro._writeMouseToMacro(xpos,ypos,mouseEvent)
 		else:
 			time.sleep(delay)
-			pyatspi.Registry.generateMouseEvent(xpos,ypos,posRelation)
-			pyatspi.Registry.generateMouseEvent(xpos,ypos,mouseEvent)
+			pyatspi.Registry.generateMouseEvent(xpos,ypos, mouseEvent)
 		self._cancel()
 
 	def _onSetTextToClipboard(self, widget):
@@ -711,7 +710,7 @@ class OCRNavigation(Gtk.Window):
 		if not paths:
 			return None
 
-		return model.get_value(model.get_iter(paths[0]), 2),model.get_value(model.get_iter(paths[0]), 3)
+		return model.get_value(model.get_iter(paths[0]), 5),model.get_value(model.get_iter(paths[0]), 6)
 
 class OCRScreenReader():
 	def __init__(self):
