@@ -4,7 +4,7 @@
 
 """OCRdesktop"""
 
-__version__   = "0.9.98"
+__version__   = "0.9.99"
 __copyright__ = "Copyright (c) 2015 Chrys"
 __license__   = "GPL"
 __authors__   = ["chrys"]
@@ -68,6 +68,7 @@ class OCRNavigation(Gtk.Window):
 		self._grayscaleImg = False
 		self._invertImg = False
 		self._blackWhiteImg = False
+		self._printToStdOut = False
 		self._blackWhiteImgValue = 200
 		self._scaleFactor = 3
 		self._offsetXpos = 0
@@ -96,6 +97,9 @@ class OCRNavigation(Gtk.Window):
 
 	def _setBlackWhiteImgValue(self, blackWhiteImgValue_p = 200):
 		self._blackWhiteImgValue = blackWhiteImgValue_p
+
+	def _setPrintToStdOut(self, printToStdOut_p = False):
+                self._printToStdOut = printToStdOut_p
 
 	def _setSendToClipboard(self, sendToClipboard_p = False):
 		self._sendToClipboard = sendToClipboard_p
@@ -201,6 +205,8 @@ class OCRNavigation(Gtk.Window):
 		self._OCRText = regexSpace.sub( '', self._OCRText)
 		if self._sendToClipboard:
 			self._setTextToClipboard( self._OCRText)
+		if self._printToStdOut:
+			print(self._OCRText)
 		if not self._hideGui:
 			self._OCRWords = self._tess.get_words()
 			self._fillOCRWordlist()
@@ -735,6 +741,7 @@ class OCRScreenReader():
 		self._invertImg = False
 		self._blackWhiteImg = False
 		self._blackWhiteImgValue = 200
+		self._printToStdOut = False
 		self._setCommandLineOptions()
 
 		if self._showHelp:
@@ -759,6 +766,7 @@ class OCRScreenReader():
 		self._Navigation._setSendToClipboard(self._sendToClipboard)
 		self._Navigation._setScreenShotMode(self._screenShotMode)
 		self._Navigation._setHideGui(self._hideGui)
+		self._Navigation._setPrintToStdOut(self._printToStdOut)
 		if self._debug:
 			print("PreWaitForFinish")
 		self._macro.WaitForFinish()
@@ -768,12 +776,13 @@ class OCRScreenReader():
 			if not self._hideGui:
 				self._Navigation.showGUI()
 			else:
+				self._Navigation._transformImg()
 				self._Navigation._ocrImage()
 
 		#FUNCTIONS
 	def _setCommandLineOptions(self):
 		try:
-			myopts, args = getopt.getopt(sys.argv[1:],"hl:vndcgibt:m:")
+			myopts, args = getopt.getopt(sys.argv[1:],"hl:vndocgibt:m:")
 			###############################
 			# o == option
 			# a == argument passed to the o
@@ -785,7 +794,7 @@ class OCRScreenReader():
 				elif o == '-d':
 					self._screenShotMode = 1
 				elif o == '-g':
-						self._grayscaleImg = True
+					self._grayscaleImg = True
 				elif o == '-i':
 					self._invertImg = True
 				elif o == '-b':
@@ -801,6 +810,8 @@ class OCRScreenReader():
 					self._macroFile = a
 				elif o == '-n':
 					self._hideGui = True
+				elif o == '-o':
+					self._printToStdOut = True
 				elif o == '-h':
 					self._printHelp()
 		except:
@@ -808,10 +819,11 @@ class OCRScreenReader():
 
 	def _printHelp(self):
 		print(__version__)
-		print("ocrdesktop -h -l -p -n -d -c -i -g -b -t -m")
+		print("ocrdesktop -h -l -p -n -d -c -o -i -g -b -t -m")
 		print("-h		Print help with start")
 		print("-l <lang>        set the OCR language default=eng")
-		print("-n		hide GUI  (use with -c or -m")
+		print("-n		hide GUI  (use with -c,-o or -m")
+		print("-o               print to STDOUT")
 		print("-v		print debug messages")
 		print("-d		OCR the Destkop")
 		print("-c		Send to Clipboard")
