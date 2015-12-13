@@ -4,7 +4,7 @@
 
 """OCRdesktop"""
 
-__version__   = "0.9.97"
+__version__   = "0.9.98"
 __copyright__ = "Copyright (c) 2015 Chrys"
 __license__   = "GPL"
 __authors__   = ["chrys"]
@@ -753,7 +753,7 @@ class OCRScreenReader():
 			print("PreWaitForFinish")
 		self._macro.WaitForFinish()
 		self._Navigation._setMacro(self._macro)
-		
+		time.sleep(0.5)
 		if self._Navigation._screenShot():
 			if not self._hideGui:
 				self._Navigation.showGUI()
