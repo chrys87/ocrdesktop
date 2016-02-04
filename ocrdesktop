@@ -131,6 +131,8 @@ class OCRNavigation(Gtk.Window):
 		currWnckScreen = Wnck.Screen.get_default()
 		currWnckScreen.force_update()
 		currWnckWindow = currWnckScreen.get_active_window()
+		if not currWnckWindow:
+		    currWnckWindow = gdkCurrDesktop
 		self._offsetXpos, self._offsetYpos, wnckWidth, wnckHeight = Wnck.Window.get_geometry(currWnckWindow)
 		pixBuff = Gdk.pixbuf_get_from_window(gdkCurrDesktop, self._offsetXpos, self._offsetYpos , wnckWidth, wnckHeight)
 		if self._debug:
