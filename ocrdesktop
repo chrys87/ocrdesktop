@@ -130,11 +130,13 @@ class OCRNavigation(Gtk.Window):
 		gdkCurrDesktop = Gdk.get_default_root_window()
 		currWnckScreen = Wnck.Screen.get_default()
 		currWnckScreen.force_update()
-		currWnckWindow = currWnckScreen.get_active_window()
-		if not currWnckWindow:
-		    currWnckWindow = gdkCurrDesktop
-		self._offsetXpos, self._offsetYpos, wnckWidth, wnckHeight = Wnck.Window.get_geometry(currWnckWindow)
-		pixBuff = Gdk.pixbuf_get_from_window(gdkCurrDesktop, self._offsetXpos, self._offsetYpos , wnckWidth, wnckHeight)
+		try:
+			currWnckWindow = currWnckScreen.get_active_window()
+			self._offsetXpos, self._offsetYpos, wnckWidth, wnckHeight = Wnck.Window.get_geometry(currWnckWindow)
+			pixBuff = Gdk.pixbuf_get_from_window(gdkCurrDesktop, self._offsetXpos, self._offsetYpos , wnckWidth, wnckHeight)
+		except:
+		    return False
+
 		if self._debug:
 			pixBuff.savev('/tmp/ocrpixBuff.bmp', 'bmp', [], []) # Debug code
 			print("save pixBuff /tmp/ocrpixBuff.bmp")
@@ -178,6 +180,8 @@ class OCRNavigation(Gtk.Window):
 		if self._screenShotMode == 0:
 			try:
 				Ok = self._screenShotWindow()
+				if not OK:
+					Ok = self._screenShotDesktop()
 			except:
 				if self.debug:
 					print('ERROR: cannot take screenshot from window, try to take a screenshot from the desktop')
