@@ -180,7 +180,7 @@ class OCRNavigation(Gtk.Window):
 		if self._screenShotMode == 0:
 			try:
 				Ok = self._screenShotWindow()
-				if not OK:
+				if not Ok:
 					Ok = self._screenShotDesktop()
 			except:
 				if self.debug:
