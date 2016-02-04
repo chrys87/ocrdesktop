@@ -99,7 +99,7 @@ class OCRNavigation(Gtk.Window):
 		self._blackWhiteImgValue = blackWhiteImgValue_p
 
 	def _setPrintToStdOut(self, printToStdOut_p = False):
-                self._printToStdOut = printToStdOut_p
+		self._printToStdOut = printToStdOut_p
 
 	def _setSendToClipboard(self, sendToClipboard_p = False):
 		self._sendToClipboard = sendToClipboard_p
@@ -125,7 +125,7 @@ class OCRNavigation(Gtk.Window):
 				print("Could not take screenshot") 
 			return False
 
-	def _screenShotWindow(self): #Mode=0 Desktop  Mode=1 CurrWindow
+	def _screenShotWindow(self): #Mode=0 Desktop Mode=1 CurrWindow
 		Gtk.main_iteration_do(False) # workarround segfault
 		gdkCurrDesktop = Gdk.get_default_root_window()
 		try:
@@ -135,7 +135,7 @@ class OCRNavigation(Gtk.Window):
 			self._offsetXpos, self._offsetYpos, wnckWidth, wnckHeight = Wnck.Window.get_geometry(currWnckWindow)
 			pixBuff = Gdk.pixbuf_get_from_window(gdkCurrDesktop, self._offsetXpos, self._offsetYpos , wnckWidth, wnckHeight)
 		except:
-		    return False
+			return False
 
 		if self._debug:
 			pixBuff.savev('/tmp/ocrpixBuff.bmp', 'bmp', [], []) # Debug code
@@ -166,7 +166,7 @@ class OCRNavigation(Gtk.Window):
 
 	def _scaleImg(self):
 		width_screen, height_screen = self._img.size
-		width_screen =  width_screen * self._scaleFactor
+		width_screen = width_screen * self._scaleFactor
 		height_screen = height_screen * self._scaleFactor
 		self._img = self._img.resize( (width_screen, height_screen), Image.BICUBIC)
 		if self._debug: # Debug code
@@ -178,13 +178,15 @@ class OCRNavigation(Gtk.Window):
 		Ok = False
 		time.sleep(0.3)
 		if self._screenShotMode == 0:
-			try:
+			try: #take care that we get a screenshot
 				Ok = self._screenShotWindow()
 				if not Ok:
+					if self.debug:
+						print('FALLBACK: was not able to Screenshot active window. Try Rootwindow now')
 					Ok = self._screenShotDesktop()
 			except:
 				if self.debug:
-					print('ERROR: cannot take screenshot from window, try to take a screenshot from the desktop')
+						print('FALLBACK: was not able to Screenshot active window. Try Rootwindow now')
 				Ok = self._screenShotDesktop()		
 
 		elif self._screenShotMode == 1:
@@ -826,18 +828,18 @@ class OCRScreenReader():
 	def _printHelp(self):
 		print(__version__)
 		print("ocrdesktop -h -l -p -n -d -c -o -i -g -b -t -m")
-		print("-h		Print help with start")
+		print("-h               Print help with start")
 		print("-l <lang>        set the OCR language default=eng")
-		print("-n		hide GUI  (use with -c,-o or -m")
+		print("-n               hide GUI (use with -c,-o or -m")
 		print("-o               print to STDOUT")
-		print("-v		print debug messages")
-		print("-d		OCR the Destkop")
-		print("-c		Send to Clipboard")
-		print("-i       Invert the picture colors")
-		print("-g       Grayscale picture")
-		print("-b       break into hard black and white")
-		print("-t       the value for braking into black and white (-b) 0 (black) - 255 (white)")
-		print("-m <MacroFile>	run a macro before starting.")	
+		print("-v               print debug messages")
+		print("-d               OCR the Destkop")
+		print("-c               Send to Clipboard")
+		print("-i               Invert the picture colors")
+		print("-g               Grayscale picture")
+		print("-b               break into hard black and white")
+		print("-t               the value for braking into black and white (-b) 0 (black) - 255 (white)")
+		print("-m <MacroFile>   run a macro before starting.")	
 		self._showHelp = True				
 
 
@@ -1127,13 +1129,13 @@ class OCRMacroManager:
 		elif eventType_p == pyatspi.KEY_PRESSRELEASE:
 			eventTypeID = 2
 		macroFile = open(self._macroFile, "a")
-		macroFile.write('k,' + str(keyValue_p) + ',' + str(keyString_p)  + ',' + str(eventTypeID) + '\n')
+		macroFile.write('k,' + str(keyValue_p) + ',' + str(keyString_p) + ',' + str(eventTypeID) + '\n')
 		macroFile.close()
 
 	def _writeMouseToMacro(self, Xpos_p, Ypos_p, MouseEvent_p):
 		macroFile = open(self._macroFile, "a")
 		macroFile.write('c,' + 'delay' + ',0.9\n')
-		macroFile.write('m,' + str(Xpos_p) + ',' + str(Ypos_p)  + ',' + MouseEvent_p + '\n')
+		macroFile.write('m,' + str(Xpos_p) + ',' + str(Ypos_p) + ',' + MouseEvent_p + '\n')
 		macroFile.close()
 
 	def showGUI(self):
