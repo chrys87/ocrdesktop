@@ -181,11 +181,11 @@ class OCRNavigation(Gtk.Window):
 			try: #take care that we get a screenshot
 				Ok = self._screenShotWindow()
 				if not Ok:
-					if self.debug:
+					if self._debug:
 						print('FALLBACK: was not able to Screenshot active window. Try Rootwindow now')
 					Ok = self._screenShotDesktop()
 			except:
-				if self.debug:
+				if self._debug:
 						print('FALLBACK: was not able to Screenshot active window. Try Rootwindow now')
 				Ok = self._screenShotDesktop()		
 
