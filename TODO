@@ -3,7 +3,6 @@ Features ready for implementation:
 - Make settings (like fontsize) saveable in gsettings or flatfile
   See http://www.micahcarrick.com/gsettings-python-gnome-3.html
 - Make it translateable _("bla")
-- Stabilization after finish features :)
 
 Needs experimenting or info
 
