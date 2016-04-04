@@ -128,6 +128,8 @@ class OCRNavigation(Gtk.Window):
 	def _screenShotWindow(self): #Mode=0 Desktop Mode=1 CurrWindow
 		Gtk.main_iteration_do(False) # workarround segfault
 		gdkCurrDesktop = Gdk.get_default_root_window()
+		//currWindow = Gdk.gdk_screen_get_active_window(Gdk.gdk_screen_get_default())
+		//pixBuff = Gdk.pixbuf_get_from_window(currWindow, 0, 0, currWindow.get_width(), currWindow.get_height())
 		try:
 			currWnckScreen = Wnck.Screen.get_default()
 			currWnckScreen.force_update()
