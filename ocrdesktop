@@ -514,7 +514,7 @@ class OCRNavigation(Gtk.Window):
 		self.menu_help.append(self.item_about)
 		self.item_about.connect("activate", self._onRunAboutDialog, self)
 
-		self.item_ocrdesktop = Gtk.MenuItem("_OCRdektop")
+		self.item_ocrdesktop = Gtk.MenuItem("_OCRDesktop")
 		self.item_ocrdesktop.set_use_underline(True)
 		self.item_interact = Gtk.MenuItem("_Interact")
 		self.item_interact.set_use_underline(True)
