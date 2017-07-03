@@ -132,7 +132,7 @@ You can Save, Load, Unload or Run the current macro from the ''macro'' menu.
 
   *  Save (''Ctrl+s''): save a macro on the filesystem, in case you need it more often.
   *  Load (''Ctrl+o''): loading meens that this macro will be started the next time OCRdesktop runs
-  *  Unload (''Ctrl+u''): remove the macro from the buffer and prevent it from running. If you loaded the macro from the filesystem, the original macro file won´t be used
+  *  Unload (''Ctrl+u''): remove the macro from the buffer and prevent it from running. If you loaded the macro from the filesystem, the original macro file wonÂ´t be used
   *  Run (''Ctrl+n): close the window an just run the macro now
 
 ==== Copy to clipboard ====
