@@ -198,8 +198,14 @@ class OCRNavigation(Gtk.Window):
 	def _ocrImage(self):
 		if self._modifiedImg is None:
 			return False
-		self._tess = tesseract("/usr/share", self._languageCode)
-				
+
+		if os.path.exists("/usr/share/tesseract-ocr/tessdata/"):
+			tesseractData = "/usr/share/tesseract-ocr/"
+		else:
+			tesseractData = "/usr/share/"
+
+		self._tess = tesseract(tesseractData, self._languageCode)
+
 		self._OCRText = self._tess.ocr_image(self._modifiedImg)
 		regexSpace = re.compile('[^\S\r\n]{2,}') #remove double spaces
 		self._OCRText = regexSpace.sub(' ',self._OCRText)
