@@ -198,11 +198,12 @@ class OCRNavigation(Gtk.Window):
 	def _ocrImage(self):
 		if self._modifiedImg is None:
 			return False
-
 		if os.path.exists("/usr/share/tesseract-ocr/tessdata/"):
-			tesseractData = "/usr/share/tesseract-ocr/"
+		    tesseractData = "/usr/share/tesseract-ocr/"
+		elif os.path.exists("/usr/share/tesseract/tessdata/"):
+		    tesseractData = "/usr/share/tesseract/tessdata/"
 		else:
-			tesseractData = "/usr/share/"
+		    tesseractData = "/usr/share/"
 
 		self._tess = tesseract(tesseractData, self._languageCode)
 
