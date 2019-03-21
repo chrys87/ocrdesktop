@@ -4,7 +4,7 @@
 
 """OCRdesktop"""
 
-__version__   = "1.01"
+__version__   = "2.0"
 __copyright__ = "Copyright (c) 2015 Chrys"
 __license__   = "GPL"
 __authors__   = ["chrys"]
@@ -20,7 +20,7 @@ from PIL import Image
 from PIL import ImageOps
 
 #tesseract
-from tesserwrap import tesseract
+from tesserwrap import Tesseract
 
 #gi
 import gi
@@ -206,8 +206,8 @@ class OCRNavigation(Gtk.Window):
 		else:
 		    tesseractData = "/usr/share/"
 
-		self._tess = tesseract(tesseractData, self._languageCode)
-
+		self._tess = Tesseract(tesseractData, self._languageCode)
+		
 		self._OCRText = self._tess.ocr_image(self._modifiedImg)
 		regexSpace = re.compile('[^\S\r\n]{2,}') #remove double spaces
 		self._OCRText = regexSpace.sub(' ',self._OCRText)
