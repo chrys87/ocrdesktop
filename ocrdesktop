@@ -202,6 +202,8 @@ class OCRNavigation(Gtk.Window):
 		    tesseractData = "/usr/share/tesseract-ocr/"
 		elif os.path.exists("/usr/share/tesseract/tessdata/"):
 		    tesseractData = "/usr/share/tesseract/tessdata/"
+		elif os.path.exists("/usr/share/tessdata/"):
+		    tesseractData = "/usr/share/tessdata/"		
 		else:
 		    tesseractData = "/usr/share/"
 
