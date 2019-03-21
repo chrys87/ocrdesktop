@@ -74,12 +74,11 @@ class OCRNavigation(Gtk.Window):
 		self._offsetXpos = 0
 		self._offsetYpos = 0
 		self.GTKmainIsRunning = False
-		locale.setlocale(locale.LC_NUMERIC, 'C') #needed by tesseract in non english languages 
+		locale.setlocale(locale.LC_ALL, 'C') #needed by tesseract in non english languages 
 		self._macro = OCRMacroManager()
 		self._languageCode = 'eng'
 		self._tess = None
 		self._isRefreshing = False
-		
 	def _setHideGui(self, hideGui_p = False):
 		self.hideGui = hideGui_p
 
