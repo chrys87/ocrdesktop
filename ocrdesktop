@@ -4,7 +4,7 @@
 
 """OCRdesktop"""
 
-__version__   = "2.0"
+__version__   = "2.1"
 __copyright__ = "Copyright (c) 2015 Chrys"
 __license__   = "GPL"
 __authors__   = ["chrys"]
@@ -49,7 +49,7 @@ class OCRNavigation(Gtk.Window):
 		self._viewButton = None
 		self._viewMode = 0
 		self._keyboardOverlayActive = False
-		self._screenShotMode = 0 # 0 = Window; 1 = Desktop
+		self._screenShotMode = 0 # 0 = Window; 1 = Desktop; 2 = Clipboard
 		self._sendToClipboard = False
 		self._hideGui = False
 		self._saveToMacro = False
@@ -108,7 +108,22 @@ class OCRNavigation(Gtk.Window):
 
 	def _setMacro(self, macro_p):
 		self._macro = macro_p
-		
+	def _readClipboard(self):
+		Ok = False
+		ClipboardObj = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+		try:
+			if self._debug:
+				print('get imagedata from clipboard')
+			pixBuff = ClipboardObj.wait_for_image()
+			self._img = self.pixbuf2image(pixBuff)
+			if self._debug:
+				if self._img == None:
+					print('no image data in clipboard')
+		except Exception as e:
+			if self._debug:
+				print(e)
+			return False
+		return self._img != None
 	def _screenShotDesktop(self):
 		CurrDesktop = Gdk.get_default_root_window()	
 		pixBuff = Gdk.pixbuf_get_from_window(CurrDesktop, 0, 0, CurrDesktop.get_width(), CurrDesktop.get_height())
@@ -188,10 +203,12 @@ class OCRNavigation(Gtk.Window):
 			except:
 				if self._debug:
 						print('FALLBACK: was not able to Screenshot active window. Try Rootwindow now')
-				Ok = self._screenShotDesktop()		
+				Ok = self._screenShotDesktop()
 
 		elif self._screenShotMode == 1:
-			Ok = self._screenShotDesktop()		
+			Ok = self._screenShotDesktop()
+		elif self._screenShotMode == 2:
+			Ok = self._readClipboard()
 		return Ok
 				
 	def _ocrImage(self):
@@ -414,18 +431,18 @@ class OCRNavigation(Gtk.Window):
 		self._menubar = Gtk.MenuBar()
 
 		self.menu_ocrdesktop = Gtk.Menu()
-		self.item_toggleview = Gtk.MenuItem("Toggle _View")
+		self.item_toggleview = Gtk.MenuItem(label="Toggle _View")
 		self.item_toggleview.set_use_underline(True)
 		self.add_accelerator(self.item_toggleview, "<Control>v","activate")
-		self.item_ocroptions = Gtk.MenuItem("_OCR Options")
+		self.item_ocroptions = Gtk.MenuItem(label="_OCR Options")
 		self.item_ocroptions.set_use_underline(True)
 		self.option_sub_menu = Gtk.Menu()
 		self.item_ocroptions.set_submenu(self.option_sub_menu)
-		self.item_invert = Gtk.CheckMenuItem("_Invert")
+		self.item_invert = Gtk.CheckMenuItem(label="_Invert")
 		self.item_invert.set_use_underline(True)
-		self.item_grayscale = Gtk.CheckMenuItem("_Grayscale")
+		self.item_grayscale = Gtk.CheckMenuItem(label="_Grayscale")
 		self.item_grayscale.set_use_underline(True)
-		self.item_barrierbw = Gtk.CheckMenuItem("_Barrier Black White")
+		self.item_barrierbw = Gtk.CheckMenuItem(label="_Barrier Black White")
 		self.item_barrierbw.set_use_underline(True)
 		self.option_sub_menu.append(self.item_invert)
 		self.option_sub_menu.append(self.item_grayscale)
@@ -437,15 +454,15 @@ class OCRNavigation(Gtk.Window):
 		self.item_grayscale.connect("activate", self._toggleGrayscaleImg)
 		self.item_barrierbw.connect("activate", self._toggleBlackWhiteImg)
 		
-		self.item_retry = Gtk.MenuItem("_Retry OCR")
+		self.item_retry = Gtk.MenuItem(label="_Retry OCR")
 		self.item_retry.set_use_underline(True)
 		self.add_accelerator(self.item_retry, "F5","activate")
-		self.item_clipboard = Gtk.MenuItem("Send to _Clipboard")
+		self.item_clipboard = Gtk.MenuItem(label="Send to _Clipboard")
 		self.item_clipboard.set_use_underline(True)
 		self.add_accelerator(self.item_clipboard, "<Control>b","activate")
-		self.item_font = Gtk.MenuItem("_Font")
+		self.item_font = Gtk.MenuItem(label="_Font")
 		self.item_font.set_use_underline(True)
-		self.item_close = Gtk.MenuItem("_Close")
+		self.item_close = Gtk.MenuItem(label="_Close")
 		self.add_accelerator(self.item_close, "<Control>q","activate")
 		self.item_close.set_use_underline(True)
 		self.menu_ocrdesktop.append(self.item_toggleview)
@@ -460,25 +477,25 @@ class OCRNavigation(Gtk.Window):
 		self.item_close.connect("activate", Gtk.main_quit)
 		
 		self.menu_interact = Gtk.Menu()
-		self.item_preclick = Gtk.CheckMenuItem("_Preclick")
+		self.item_preclick = Gtk.CheckMenuItem(label="_Preclick")
 		self.item_preclick.set_use_underline(True)
 		self.add_accelerator(self.item_preclick, "<Control>p","activate")
-		self.item_leftclick = Gtk.MenuItem("_Left Click")
+		self.item_leftclick = Gtk.MenuItem(label="_Left Click")
 		self.item_leftclick.set_use_underline(True)
 		self.add_accelerator(self.item_leftclick, "<Control>l","activate")
-		self.item_doubletclick = Gtk.MenuItem("_Double Click")
+		self.item_doubletclick = Gtk.MenuItem(label="_Double Click")
 		self.item_doubletclick.set_use_underline(True)
 		self.add_accelerator(self.item_doubletclick, "<Control>d","activate")
-		self.item_rightclick = Gtk.MenuItem("_Right Click")
+		self.item_rightclick = Gtk.MenuItem(label="_Right Click")
 		self.item_rightclick.set_use_underline(True)
 		self.add_accelerator(self.item_rightclick, "<Control>r","activate")
-		self.item_middleclick = Gtk.MenuItem("_Middle Click")
+		self.item_middleclick = Gtk.MenuItem(label="_Middle Click")
 		self.item_middleclick.set_use_underline(True)
 		self.add_accelerator(self.item_middleclick, "<Control>m","activate")
-		self.item_routeto = Gtk.MenuItem("Route _To")
+		self.item_routeto = Gtk.MenuItem(label="Route _To")
 		self.item_routeto.set_use_underline(True)
 		self.add_accelerator(self.item_routeto, "<Control>t","activate")
-		self.item_sendkey = Gtk.MenuItem("Send _Key")
+		self.item_sendkey = Gtk.MenuItem(label="Send _Key")
 		self.item_sendkey.set_use_underline(True)
 		self.add_accelerator(self.item_sendkey, "<Control>k","activate")
 		self.menu_interact.append(self.item_preclick)
@@ -497,16 +514,16 @@ class OCRNavigation(Gtk.Window):
 		self.item_sendkey.connect("activate", self._sendKeyMode)
 		
 		self.menu_macro = Gtk.Menu()
-		self.item_save = Gtk.MenuItem("_Save As")
+		self.item_save = Gtk.MenuItem(label="_Save As")
 		self.item_save.set_use_underline(True)
 		self.add_accelerator(self.item_save, "<Control>s","activate")
-		self.item_load = Gtk.MenuItem("_Load")
+		self.item_load = Gtk.MenuItem(label="_Load")
 		self.item_load.set_use_underline(True)
 		self.add_accelerator(self.item_load, "<Control>o","activate")
-		self.item_delete = Gtk.MenuItem("_Unload")
+		self.item_delete = Gtk.MenuItem(label="_Unload")
 		self.item_delete.set_use_underline(True)
 		self.add_accelerator(self.item_delete, "<Control>u","activate")
-		self.item_run = Gtk.MenuItem("_Run")
+		self.item_run = Gtk.MenuItem(label="_Run")
 		self.item_run.set_use_underline(True)
 		self.add_accelerator(self.item_run, "<Control>n","activate")
 		self.menu_macro.append(self.item_save)
@@ -519,18 +536,18 @@ class OCRNavigation(Gtk.Window):
 		self.item_run.connect("activate", self._onRunMacro)
 		
 		self.menu_help = Gtk.Menu()
-		self.item_about = Gtk.MenuItem("_About")
+		self.item_about = Gtk.MenuItem(label="_About")
 		self.item_about.set_use_underline(True)	
 		self.menu_help.append(self.item_about)
 		self.item_about.connect("activate", self._onRunAboutDialog, self)
 
-		self.item_ocrdesktop = Gtk.MenuItem("_OCRDesktop")
+		self.item_ocrdesktop = Gtk.MenuItem(label="_OCRDesktop")
 		self.item_ocrdesktop.set_use_underline(True)
-		self.item_interact = Gtk.MenuItem("_Interact")
+		self.item_interact = Gtk.MenuItem(label="_Interact")
 		self.item_interact.set_use_underline(True)
-		self.item_macro = Gtk.MenuItem("_Macro")
+		self.item_macro = Gtk.MenuItem(label="_Macro")
 		self.item_macro.set_use_underline(True)
-		self.item_help = Gtk.MenuItem("_Help")
+		self.item_help = Gtk.MenuItem(label="_Help")
 		self.item_help.set_use_underline(True)
 
 		self.item_ocrdesktop.set_submenu(self.menu_ocrdesktop)
@@ -543,7 +560,7 @@ class OCRNavigation(Gtk.Window):
 		self._menubar.append(self.item_help)
 		self.add_accel_group(self._accelerators)
 		
-		self._keyboardOverlayLabel = Gtk.Label("Please insert keyboard commands. exit with: F4")
+		self._keyboardOverlayLabel = Gtk.Label(label="Please insert keyboard commands. exit with: F4")
 		self._keyboardOverlayLabel.set_selectable(True)
 
 		self._font_button = Gtk.FontButton()
@@ -802,7 +819,7 @@ class OCRScreenReader():
 		#FUNCTIONS
 	def _setCommandLineOptions(self):
 		try:
-			myopts, args = getopt.getopt(sys.argv[1:],"hl:vndocgibt:m:")
+			myopts, args = getopt.getopt(sys.argv[1:],"hl:vndocCgibt:m:")
 			###############################
 			# o == option
 			# a == argument passed to the o
@@ -811,6 +828,8 @@ class OCRScreenReader():
 				if o == '-v':
 					self._debug = True
 					print('Debugmode ON')
+				elif o == '-C':
+					self._screenShotMode = 2
 				elif o == '-d':
 					self._screenShotMode = 1
 				elif o == '-g':
@@ -839,7 +858,7 @@ class OCRScreenReader():
 
 	def _printHelp(self):
 		print(__version__)
-		print("ocrdesktop -h -l -p -n -d -c -o -i -g -b -t -m")
+		print("ocrdesktop -h -l -p -n -d -c -C -o -i -g -b -t -m")
 		print("-h               Print help with start")
 		print("-l <lang>        set the OCR language default=eng")
 		print("-n               hide GUI (use with -c,-o or -m")
@@ -847,6 +866,7 @@ class OCRScreenReader():
 		print("-v               print debug messages")
 		print("-d               OCR the Destkop")
 		print("-c               Send to Clipboard")
+		print("-C               Read Image from Clipboard")
 		print("-i               Invert the picture colors")
 		print("-g               Grayscale picture")
 		print("-b               break into hard black and white")
