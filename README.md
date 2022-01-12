@@ -10,16 +10,20 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 - tesseract-lang-<yourLanguageCode>
 - python3-pillow
 - python-atspi
-- python-tesserwrap >=0.1.6 (https://pypi.python.org/pypi/tesserwrap)
+- python-pytesseract
 - libwnck3
 - GTK3
+# Optional Depencys
+- python-scipy (for color detection)
+- python-webcolors (for color detection)
 
 # INSTALL 
-ARCH Linux
-$ yaourt ocrdesktop
+ARCH Linux stable
+$ yay -S ocrdesktop
+ARCH Linux git
+$ yay -S ocrdesktop-git
 
 Just the Depencys:
-$ pacman -S python tesseract tesseract-data-deu tesseract-data-eng python-pillow python-atspi libwnck3 gtk3
-$ yaourt python-tesserwrap
+$ pacman -S python tesseract tesseract-data-deu tesseract-data-eng python-pillow python-atspi libwnck3 gtk3 python-webcolors python-scipy python-pytesseract
 
 
