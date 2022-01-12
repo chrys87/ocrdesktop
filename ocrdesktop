@@ -4,7 +4,7 @@
 
 """OCRdesktop"""
 
-__version__   = "3.0"
+__version__   = "4.0"
 __copyright__ = "Copyright (c) 2022 Chrys"
 __license__   = "GPL"
 __authors__   = ["chrys"]
@@ -56,7 +56,7 @@ import pyatspi
 
 
 # here the class
-class OCRNavigation(Gtk.Window):
+class OCRScreenReader(Gtk.Window):
     def __init__(self, debug_p = False):
         self._debug = debug_p
         self._tree = None
@@ -65,8 +65,9 @@ class OCRNavigation(Gtk.Window):
         self._saveToMacroButton = None
         self._viewButton = None
         self._viewMode = 0
+        self._showHelp = False
         self._keyboardOverlayActive = False
-        self._screenShotMode = 0 # 0 = Window; 1 = Desktop; 2 = Clipboard
+        self._screenShotMode = 0 # 0 = Window; 1 = Desktop; 2 = Clipboard; 3 = File
         self._sendToClipboard = False
         self._hideGui = False
         self._saveToMacro = False
@@ -101,7 +102,6 @@ class OCRNavigation(Gtk.Window):
         self._kdtDB = None
         self.colorNames = []
         self.colorCache = {}
-
     def _setHideGui(self, hideGui_p = False):
         self.hideGui = hideGui_p
 
@@ -304,6 +304,8 @@ class OCRNavigation(Gtk.Window):
         except Exception as e:
             print(e)
         return 'unknown'
+    def _ocrAllImages(self):
+        pass
     def _ocrImage(self):
         if self._modifiedImg is None:
             return False
@@ -884,66 +886,35 @@ class OCRNavigation(Gtk.Window):
 
         return model.get_value(model.get_iter(paths[0]), 5),model.get_value(model.get_iter(paths[0]), 6)
 
-class OCRScreenReader():
-    def __init__(self):
-        self._sendToClipboard = False
-        self._hideGui = False
-        self._screenShotMode = 0 # 0 = Window; 1 = Desktop
-        self._macroFile = os.path.expanduser('~') + '/.activeOCRMacro.ocrm'
-        self._showHelp = False
-        self._debug = False
-        self._languageCode = 'eng'
-        self._grayscaleImg = False
-        self._invertImg = False
-        self._blackWhiteImg = False
-        self._blackWhiteImgValue = 200
-        self._printToStdOut = False
-        self._colorCalculation = False
-        self._colorCalculationMax = 3
+    def run(self):
         self._setCommandLineOptions()
-
+        
         if self._showHelp:
             return
 
         #MACRO
-        self._macro = OCRMacroManager(self._debug)
-        self._macro._loadMcroFile(self._macroFile)
         if not self._hideGui:
             self._macro.showGUI()
         else:
             if self._macro._macroExists():
                 self._macro._RunMacro()
 
-        #NAVIGATION
-        self._Navigation = OCRNavigation(self._debug)
-        self._Navigation._setlanguageCode(self._languageCode)
-        self._Navigation._setGrayscaleImg(self._grayscaleImg)
-        self._Navigation._setInvertImg(self._invertImg)
-        self._Navigation._setBlackWhiteImg(self._blackWhiteImg)
-        self._Navigation._setBlackWhiteImgValue(self._blackWhiteImgValue)
-        self._Navigation._setSendToClipboard(self._sendToClipboard)
-        self._Navigation._setScreenShotMode(self._screenShotMode)
-        self._Navigation._setHideGui(self._hideGui)
-        self._Navigation._setPrintToStdOut(self._printToStdOut)
-        self._Navigation._setColorCalculation(self._colorCalculation)
-        self._Navigation._setColorCalculationMax(self._colorCalculationMax)
-
         if self._debug:
             print("PreWaitForFinish")
         self._macro.WaitForFinish()
-        self._Navigation._setMacro(self._macro)
+        self._setMacro(self._macro)
         time.sleep(0.5)
-        if self._Navigation._screenShot():
+        if self._screenShot():
             if not self._hideGui:
-                self._Navigation.showGUI()
+                self.showGUI()
             else:
-                self._Navigation._transformImg()
-                self._Navigation._ocrImage()
+                self._transformImg()
+                self._ocrImage()
 
         #FUNCTIONS
     def _setCommandLineOptions(self):
         try:
-            myopts, args = getopt.getopt(sys.argv[1:],"hl:vndocCOx:gibt:m:")
+            myopts, args = getopt.getopt(sys.argv[1:],"hl:vndocCOx:gibt:m:f:")
             ###############################
             # o == option
             # a == argument passed to the o
@@ -952,6 +923,8 @@ class OCRScreenReader():
                 if o == '-v':
                     self._debug = True
                     print('Debugmode ON')
+                elif o == '-f':
+                    self._screenShotMode = 3
                 elif o == '-C':
                     self._screenShotMode = 2
                 elif o == '-d':
@@ -970,7 +943,7 @@ class OCRScreenReader():
                 elif o == '-l':
                     self._languageCode = a
                 elif o == '-m':
-                    self._macroFile = a
+                    self._macro._loadMcroFile(a)
                 elif o == '-n':
                     self._hideGui = True
                 elif o == '-o':
@@ -992,6 +965,7 @@ class OCRScreenReader():
         print("-n               hide GUI (use with -c,-o or -m")
         print("-d               OCR the Destkop")
         print("-c               Send to Clipboard")
+        #print("-f <File>        Read Image from File (PDF, JPG, PNG...)")
         print("-C               Read Image from Clipboard")
         print("-o               print to STDOUT")
         print("-O               analyze color information (will take more time)")
@@ -1520,4 +1494,4 @@ KEY_CODE = {
 
 if __name__ == "__main__":
     Application = OCRScreenReader()
-
+    Application.run()
