@@ -15,6 +15,7 @@ __comments__  = "A accessibility tool for woring with inaccessible windows and d
 #Python Utils
 import os, sys, getopt, locale, time, re, _thread, shutil
 from collections import defaultdict
+from mimetypes import MimeTypes
 
 #PIL
 from PIL import Image
@@ -102,6 +103,7 @@ class OCRScreenReader(Gtk.Window):
         self._kdtDB = None
         self.colorNames = []
         self.colorCache = {}
+        self._file = ''
     def _setHideGui(self, hideGui_p = False):
         self.hideGui = hideGui_p
 
@@ -235,7 +237,24 @@ class OCRScreenReader(Gtk.Window):
             Ok = self._screenShotDesktop()
         elif self._screenShotMode == 2:
             Ok = self._readClipboard()
+        elif self._screenShotMode == 3:
+            Ok = self._readFile()
         return Ok
+    def _readFile(self):
+        if self._file == '':
+            return False
+        if not os.path.exists(self._file):
+            return False
+        if not os.path.isfile(self._file):
+            return False
+        mime = MimeTypes()
+        mime_type = mime.guess_type(self._file)
+        if mime_type[0] != 'application/pdf':
+            try:
+                self._img = [Image.open(self._file)]
+            except Exception as e:
+                return False
+        return True
     def convert_rgb_to_names(self, rgb_tuple):
         try:
             return self.colorCache[rgb_tuple]
@@ -308,7 +327,6 @@ class OCRScreenReader(Gtk.Window):
         self._OCRText = ''
         self._OCRWords = {}
         self._OCRWordList = []
-        self._img.append(self._img[0])
         for img in self._img:
             modifiedImg = self._transformImg(img)
             self._modifiedImg.append(modifiedImg)
@@ -940,6 +958,7 @@ class OCRScreenReader(Gtk.Window):
                     print('Debugmode ON')
                 elif o == '-f':
                     self._screenShotMode = 3
+                    self._file = a
                 elif o == '-C':
                     self._screenShotMode = 2
                 elif o == '-d':
@@ -974,13 +993,13 @@ class OCRScreenReader(Gtk.Window):
 
     def _printHelp(self):
         print(__version__)
-        print("ocrdesktop -h -l <lang> -n -d -c -C -o -O -x <Value> -v -i -g -b -t <Value> -m <MacroFile>")
+        print("ocrdesktop -h -l <lang> -n -d -c -C -o -O -x <Value> -v -i -g -b -t <Value> -f <File> -m <MacroFile>")
         print("-h               Print help with start")
         print("-l <lang>        set the OCR language default=eng")
         print("-n               hide GUI (use with -c,-o or -m")
         print("-d               OCR the Destkop")
         print("-c               Send to Clipboard")
-        #print("-f <File>        Read Image from File (PDF, JPG, PNG...)")
+        print("-f <File>        Read Image from File (PDF, JPG, PNG...)")
         print("-C               Read Image from Clipboard")
         print("-o               print to STDOUT")
         print("-O               analyze color information (will take more time)")
