@@ -13,7 +13,7 @@ __appname__   = "OCRdesktop"
 __comments__  = "A accessibility tool for woring with inaccessible windows and dialogs"
 
 #Python Utils
-import os, sys, getopt, locale, time, re, _thread, shutil
+import os, sys, getopt, locale, time, re, _thread, shutil, tempfile
 from collections import defaultdict
 from mimetypes import MimeTypes
 
@@ -24,6 +24,13 @@ from PIL import ImageOps
 #pytesseract
 import pytesseract
 from pytesseract import Output
+
+# pdf2image
+pdf2imageAvailable = True
+try:
+    from pdf2image import convert_from_path
+except:
+    pdf2imageAvailable = False
 
 # scipy
 scipyAvailable = True
@@ -252,6 +259,28 @@ class OCRScreenReader(Gtk.Window):
         if mime_type[0] != 'application/pdf':
             try:
                 self._img = [Image.open(self._file)]
+            except Exception as e:
+                return False
+        else:
+            try:
+                global pdf2imageAvailable
+                if not pdf2imageAvailable:
+                    return False
+                # save temp image files in temp dir, delete them after we are finished
+                with tempfile.TemporaryDirectory() as temp_dir:
+
+                    # convert pdf to multiple image
+                    images = convert_from_path(self._file, output_folder=temp_dir)
+
+                    # save images to temporary directory
+                    temp_images = []
+                    for i in range(len(images)):
+                        image_path = f'{temp_dir}/{i}.jpg'
+                        images[i].save(image_path, 'JPEG')
+                        temp_images.append(image_path)
+
+                    # read images into pillow.Image
+                    self._img = list(map(Image.open, temp_images))
             except Exception as e:
                 return False
         return True
