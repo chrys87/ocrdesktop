@@ -724,20 +724,20 @@ class OCRScreenReader(Gtk.Window):
 
         self.item_ocrdesktop = Gtk.MenuItem(label="_OCRDesktop")
         self.item_ocrdesktop.set_use_underline(True)
-        self.item_interact = Gtk.MenuItem(label="_Interact")
-        self.item_interact.set_use_underline(True)
-        self.item_macro = Gtk.MenuItem(label="_Macro")
-        self.item_macro.set_use_underline(True)
+        self.item_ocrdesktop.set_submenu(self.menu_ocrdesktop)
+        self._menubar.append(self.item_ocrdesktop)
+        if self._screenShotMode in [0,1]: # window, desktop
+            self.item_interact = Gtk.MenuItem(label="_Interact")
+            self.item_interact.set_use_underline(True)
+            self.item_interact.set_submenu(self.menu_interact)
+            self._menubar.append(self.item_interact)
+            self.item_macro = Gtk.MenuItem(label="_Macro")
+            self.item_macro.set_use_underline(True)
+            self.item_macro.set_submenu(self.menu_macro)
+            self._menubar.append(self.item_macro)
         self.item_help = Gtk.MenuItem(label="_Help")
         self.item_help.set_use_underline(True)
-
-        self.item_ocrdesktop.set_submenu(self.menu_ocrdesktop)
-        self.item_interact.set_submenu(self.menu_interact)
-        self.item_macro.set_submenu(self.menu_macro)
         self.item_help.set_submenu(self.menu_help)
-        self._menubar.append(self.item_ocrdesktop)
-        self._menubar.append(self.item_interact)
-        self._menubar.append(self.item_macro)
         self._menubar.append(self.item_help)
         self.add_accel_group(self._accelerators)
         
@@ -956,17 +956,19 @@ class OCRScreenReader(Gtk.Window):
             return
 
         #MACRO
-        if not self._hideGui:
-            self._macro.showGUI()
-        else:
-            if self._macro._macroExists():
-                self._macro._RunMacro()
+        if self._screenShotMode in [0,1]: # window, desktop
+            if not self._hideGui:
+                self._macro.showGUI()
+            else:
+                if self._macro._macroExists():
+                    self._macro._RunMacro()
 
         if self._debug:
             print("PreWaitForFinish")
-        self._macro.WaitForFinish()
-        self._setMacro(self._macro)
-        time.sleep(0.5)
+        if self._screenShotMode in [0,1]: # window, desktop
+            self._macro.WaitForFinish()
+            self._setMacro(self._macro)
+            time.sleep(0.5)
         if self._screenShot():
             if not self._hideGui:
                 self.showGUI()
