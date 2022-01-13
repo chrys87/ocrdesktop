@@ -81,8 +81,8 @@ class OCRScreenReader(Gtk.Window):
         self._OCRWords = None
         self._OCRWordList = []
         self._OCRText = ''
-        self._img = None
-        self._modifiedImg = None
+        self._img = []
+        self._modifiedImg = []
         self._grayscaleImg = False
         self._invertImg = False
         self._blackWhiteImg = False
@@ -141,31 +141,30 @@ class OCRScreenReader(Gtk.Window):
             if self._debug:
                 print('get imagedata from clipboard')
             pixBuff = ClipboardObj.wait_for_image()
-            self._img = self.pixbuf2image(pixBuff)
+            self._img = [self.pixbuf2image(pixBuff)]
             if self._debug:
-                if self._img == None:
+                if self._img[0] == None:
                     print('no image data in clipboard')
         except Exception as e:
             if self._debug:
                 print(e)
             return False
-        return self._img != None
+        return self._img[0] != None
     def _screenShotDesktop(self):
         CurrDesktop = Gdk.get_default_root_window()
         pixBuff = Gdk.pixbuf_get_from_window(CurrDesktop, 0, 0, CurrDesktop.get_width(), CurrDesktop.get_height())
         if (pixBuff != None):
-            self._img = self.pixbuf2image(pixBuff)
+            self._img = [self.pixbuf2image(pixBuff)]
             if self._debug: # Debug code
-                self._img.save("/tmp/ocrScreenshot.png") 
+                self._img[0].save("/tmp/ocrScreenshot.png") 
                 print("save screenshot:/tmp/ocrScreenshot.png") 
-            self._scaleImg()
             return True
         else:
             if self._debug: # Debug code
                 print("Could not take screenshot") 
             return False
 
-    def _screenShotWindow(self): #Mode=0 Desktop Mode=1 CurrWindow
+    def _screenShotWindow(self): 
         Gtk.main_iteration_do(False) # workarround segfault
         gdkCurrDesktop = Gdk.get_default_root_window()
         #currWindow = Gdk.gdk_screen_get_active_window(Gdk.gdk_screen_get_default())
@@ -185,11 +184,10 @@ class OCRScreenReader(Gtk.Window):
             pixBuff.savev('/tmp/ocrpixBuff.bmp', 'bmp', [], []) # Debug code
             print("save pixBuff /tmp/ocrpixBuff.bmp")
         if (pixBuff != None):
-            self._img = self.pixbuf2image(pixBuff)
+            self._img = [self.pixbuf2image(pixBuff)]
             if self._debug: # Debug code
-                self._img.save("/tmp/ocrScreenshot.png") 
+                self._img[0].save("/tmp/ocrScreenshot.png") 
                 print("save screenshot:/tmp/ocrScreenshot.png") 
-            self._scaleImg()
             return True
         else:
             if self._debug: # Debug code
@@ -208,15 +206,15 @@ class OCRScreenReader(Gtk.Window):
         im = Image.frombytes(mode, (w, h), data, "raw", mode, stride)
         return im
 
-    def _scaleImg(self):
-        width_screen, height_screen = self._img.size
+    def _scaleImg(self, img):
+        width_screen, height_screen = img.size
         width_screen = width_screen * self._scaleFactor
         height_screen = height_screen * self._scaleFactor
-        self._img = self._img.resize( (width_screen, height_screen), Image.BICUBIC)
+        scaledImg = img.resize( (width_screen, height_screen), Image.BICUBIC)
         if self._debug: # Debug code
-            self._img.save("/tmp/ocrScreenshotScaled.png")
+            scaledImg.save("/tmp/ocrScreenshotScaled.png")
             print("save scaled screenshot:/tmp/ocrScreenshotScaled.png")
-
+        return scaledImg
 
     def _screenShot(self):
         Ok = False
@@ -255,7 +253,7 @@ class OCRScreenReader(Gtk.Window):
         self.colorCache[rgb_tuple] = self.colorNames[index]
         return self.colorNames[index]
 
-    def _getColorString(self, box, index):
+    def _getColorString(self, box, index, img):
         global scipyAvailable, webColorsAvailable
         if not self._colorCalculation:
             return 'unknown'
@@ -271,7 +269,7 @@ class OCRScreenReader(Gtk.Window):
 
         if self._colorCalculationMax < 1:
             return 'unknown'
-        if not self._img:
+        if not img:
             return 'unknown'
         if not box:
             return 'unknown'
@@ -280,7 +278,7 @@ class OCRScreenReader(Gtk.Window):
             height = box['height'][index]
             left = box['left'][index]
             top = box['top'][index]
-            boxImg = self._img.crop((left, top, left + width, top + height))
+            boxImg = img.crop((left, top, left + width, top + height))
             by_color = defaultdict(int)
             for pixel in boxImg.getdata():
                 by_color[pixel] += 1
@@ -304,13 +302,24 @@ class OCRScreenReader(Gtk.Window):
         except Exception as e:
             print(e)
         return 'unknown'
+
     def _ocrAllImages(self):
-        pass
-    def _ocrImage(self):
-        if self._modifiedImg is None:
-            return False
+        self._modifiedImg = []
         self._OCRText = ''
-        self._OCRWords = pytesseract.image_to_data(self._modifiedImg, output_type=Output.DICT,lang=self._languageCode, config='--psm 4')
+        for img in self._img:
+            modifiedImg = self._transformImg(img)
+            self._modifiedImg.append(modifiedImg)
+            words = self._ocrImage(modifiedImg)
+            #self._OCRWords = words
+        if self._sendToClipboard:
+            self._setTextToClipboard( self._OCRText)
+        if self._printToStdOut:
+            print(self._OCRText)
+
+    def _ocrImage(self, img):
+        if img is None:
+            return False
+        self._OCRWords = pytesseract.image_to_data(img, output_type=Output.DICT,lang=self._languageCode, config='--psm 4')
         boxCounter = len(self._OCRWords['level'])
         if boxCounter == 0:
             return False
@@ -337,7 +346,7 @@ class OCRScreenReader(Gtk.Window):
             if not self._hideGui:
                 self._OCRWordList.append([self._OCRWords['text'][i],
                   round(self._OCRWords['height'][i] / 3 * 0.78,0), # calculated fontsize
-                  self._getColorString(self._OCRWords, i), # guess color
+                  self._getColorString(self._OCRWords, i, img), # guess color
                   'text', # guess object type
                   int(self._OCRWords['width'][i] / 2 + self._OCRWords['left'][i]), # x
                   int(self._OCRWords['height'][i] / 2 + self._OCRWords['top'][i]), # y
@@ -371,11 +380,6 @@ class OCRScreenReader(Gtk.Window):
         self._OCRText = regexSpace.sub( '', self._OCRText)
         regexSpace = re.compile('\n\s') #remove trailing spaces
         self._OCRText = regexSpace.sub( '\n', self._OCRText)
-
-        if self._sendToClipboard:
-            self._setTextToClipboard( self._OCRText)
-        if self._printToStdOut:
-            print(self._OCRText)
         return True
 
     def add_accelerator(self, widget, accelerator, signal="activate"):
@@ -386,24 +390,24 @@ class OCRScreenReader(Gtk.Window):
 
     def on_font_set(self, widget):
         font_description = widget.get_font_desc()
-        self._textbox.modify_font(font_description)
+        self._textbox.modify_font(label="font_description")
         
     def _onRefreshContent(self, widget):
         self._refreshContent()
     
-    def _transformImg(self):
-        self._modifiedImg = self._img
+    def _transformImg(self, img):
+        modifiedImg = self._scaleImg(img)
         if self._invertImg:
-            self._modifiedImg = ImageOps.invert(self._modifiedImg)
+            modifiedImg = ImageOps.invert(modifiedImg)
         if self._grayscaleImg:
-            self._modifiedImg = ImageOps.grayscale(self._modifiedImg)
+            modifiedImg = ImageOps.grayscale(modifiedImg)
         if self._blackWhiteImg:
             lut = [255 if v > self._blackWhiteImgValue else 0 for v in range(256)]
-            self._modifiedImg = self._modifiedImg.point(lut)
+            modifiedImg = modifiedImg.point(lut)
         if self._debug: # Debug code
-            self._modifiedImg.save("/tmp/ocrScreenshotTransformed.png")
+            modifiedImg.save("/tmp/ocrScreenshotTransformed.png")
             print("save scaled screenshot:/tmp/ocrScreenshotTransformed.png")
-        
+        return modifiedImg
     def _refreshContent(self):
         if self._isRefreshing == True:
             print("refresh already running")
@@ -418,8 +422,7 @@ class OCRScreenReader(Gtk.Window):
         self._scrolledWindowTree = None
         self._scrolledWindowText = None
         self._textbox = None
-        self._transformImg()
-        self._ocrImage()
+        self._ocrAllImages()
 
         self._scrolledWindowText = Gtk.ScrolledWindow()
 
@@ -908,8 +911,7 @@ class OCRScreenReader(Gtk.Window):
             if not self._hideGui:
                 self.showGUI()
             else:
-                self._transformImg()
-                self._ocrImage()
+                self._ocrAllImages()
 
         #FUNCTIONS
     def _setCommandLineOptions(self):
