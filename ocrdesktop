@@ -308,12 +308,13 @@ class OCRScreenReader(Gtk.Window):
         self._OCRText = ''
         self._OCRWords = {}
         self._OCRWordList = []
+        self._img.append(self._img[0])
         for img in self._img:
             modifiedImg = self._transformImg(img)
             self._modifiedImg.append(modifiedImg)
             OCRWords = self._ocrImage(modifiedImg)
             self.appendToOCRWords(OCRWords)
-            self._analyzeOCRWords(OCRWords, modifiedImg)
+            self._processOCRWords(OCRWords, modifiedImg)
         self._cleanOCRText()
         if self._sendToClipboard:
             self._setTextToClipboard( self._OCRText)
@@ -340,13 +341,14 @@ class OCRScreenReader(Gtk.Window):
         self._OCRText = regexSpace.sub( '', self._OCRText)
         regexSpace = re.compile('\n\s') #remove trailing spaces
         self._OCRText = regexSpace.sub( '\n', self._OCRText)
+        self._OCRText = self._OCRText[:-1]
 
     def _ocrImage(self, img):
         if img is None:
             return {}
-        OCRWords = pytesseract.image_to_data(img, output_type=Output.DICT,lang=self._languageCode, config='--psm 4')
+        OCRWords = pytesseract.image_to_data(img, output_type=Output.DICT, lang=self._languageCode, config='--psm 4')
         return OCRWords
-    def _analyzeOCRWords(self, OCRWords, img):
+    def _processOCRWords(self, OCRWords, img):
         boxCounter = len(OCRWords['level'])
         if boxCounter == 0:
             return False
@@ -356,9 +358,7 @@ class OCRScreenReader(Gtk.Window):
         lastLine = -1
         
         for i in range(boxCounter):
-            #print(self._OCRWords['text'][i], self._OCRWords['page_num'][i], self._OCRWords['block_num'][i], self._OCRWords['par_num'][i], self._OCRWords['line_num'][i])
             if (len(OCRWords['text'][i]) == 0) or OCRWords['text'][i].isspace():
-                #print('skip')
                 continue
             if lastLine != -1:
                 if lastLine != -1 and \
@@ -383,6 +383,7 @@ class OCRScreenReader(Gtk.Window):
             lastBlock = OCRWords['block_num'][i]
             lastPar = OCRWords['par_num'][i]
             lastLine = OCRWords['line_num'][i]
+        self._OCRText += '\n'
 
         #if os.path.exists("/usr/share/tesseract-ocr/4.00/tessdata/"):
         #    tesseractData = "/usr/share/tesseract-ocr/4.00/tessdata/"
