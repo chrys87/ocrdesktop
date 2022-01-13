@@ -306,68 +306,28 @@ class OCRScreenReader(Gtk.Window):
     def _ocrAllImages(self):
         self._modifiedImg = []
         self._OCRText = ''
+        self._OCRWords = {}
+        self._OCRWordList = []
         for img in self._img:
             modifiedImg = self._transformImg(img)
             self._modifiedImg.append(modifiedImg)
-            words = self._ocrImage(modifiedImg)
-            #self._OCRWords = words
+            OCRWords = self._ocrImage(modifiedImg)
+            self.appendToOCRWords(OCRWords)
+            self._analyzeOCRWords(OCRWords, modifiedImg)
+        self._cleanOCRText()
         if self._sendToClipboard:
             self._setTextToClipboard( self._OCRText)
         if self._printToStdOut:
             print(self._OCRText)
-
-    def _ocrImage(self, img):
-        if img is None:
-            return False
-        self._OCRWords = pytesseract.image_to_data(img, output_type=Output.DICT,lang=self._languageCode, config='--psm 4')
-        boxCounter = len(self._OCRWords['level'])
-        if boxCounter == 0:
-            return False
-        lastPage = -1
-        lastBlock = -1
-        lastPar = -1
-        lastLine = -1
-        
-        for i in range(boxCounter):
-            #print(self._OCRWords['text'][i], self._OCRWords['page_num'][i], self._OCRWords['block_num'][i], self._OCRWords['par_num'][i], self._OCRWords['line_num'][i])
-            if (len(self._OCRWords['text'][i]) == 0) or self._OCRWords['text'][i].isspace():
-                #print('skip')
-                continue
-            if lastLine != -1:
-                if lastLine != -1 and \
-                ((lastPage != self._OCRWords['page_num'][i]) or \
-                (lastBlock != self._OCRWords['block_num'][i]) or \
-                (lastPar != self._OCRWords['par_num'][i]) or \
-                (lastLine != self._OCRWords['line_num'][i])):
-                    self._OCRText += '\n'
-                else:
-                    self._OCRText += ' '
-            self._OCRText += self._OCRWords['text'][i]
-            if not self._hideGui:
-                self._OCRWordList.append([self._OCRWords['text'][i],
-                  round(self._OCRWords['height'][i] / 3 * 0.78,0), # calculated fontsize
-                  self._getColorString(self._OCRWords, i, img), # guess color
-                  'text', # guess object type
-                  int(self._OCRWords['width'][i] / 2 + self._OCRWords['left'][i]), # x
-                  int(self._OCRWords['height'][i] / 2 + self._OCRWords['top'][i]), # y
-                  int(self._OCRWords['conf'][i])]) # confidence
-
-            lastPage = self._OCRWords['page_num'][i]
-            lastBlock = self._OCRWords['block_num'][i]
-            lastPar = self._OCRWords['par_num'][i]
-            lastLine = self._OCRWords['line_num'][i]
-
-        #if os.path.exists("/usr/share/tesseract-ocr/4.00/tessdata/"):
-        #    tesseractData = "/usr/share/tesseract-ocr/4.00/tessdata/"
-        #elif os.path.exists("/usr/share/tesseract-ocr/tessdata/"):
-        #    tesseractData = "/usr/share/tesseract-ocr/tessdata/"
-        #elif os.path.exists("/usr/share/tesseract/tessdata/"):
-        #    tesseractData = "/usr/share/tesseract/tessdata/"
-        #elif os.path.exists("/usr/share/tessdata/"):
-        #    tesseractData = "/usr/share/tessdata/"
-        #else:
-        #    tesseractData = "/usr/share/"
-        
+    def appendToOCRWords(self, OCRWords):
+        for k, v in OCRWords.items():
+            try:
+                x = self._OCRWords[k]
+                if isinstance(v,list):
+                    self._OCRWords[k].append(v)
+            except KeyError:
+                self._OCRWords[k] = v
+    def _cleanOCRText(self):
         regexSpace = re.compile('[^\S\r\n]{2,}') #remove double spaces
         self._OCRText = regexSpace.sub(' ',self._OCRText)
         regexSpace = re.compile('\n\s*\n') #remove empty lines
@@ -380,6 +340,61 @@ class OCRScreenReader(Gtk.Window):
         self._OCRText = regexSpace.sub( '', self._OCRText)
         regexSpace = re.compile('\n\s') #remove trailing spaces
         self._OCRText = regexSpace.sub( '\n', self._OCRText)
+
+    def _ocrImage(self, img):
+        if img is None:
+            return {}
+        OCRWords = pytesseract.image_to_data(img, output_type=Output.DICT,lang=self._languageCode, config='--psm 4')
+        return OCRWords
+    def _analyzeOCRWords(self, OCRWords, img):
+        boxCounter = len(OCRWords['level'])
+        if boxCounter == 0:
+            return False
+        lastPage = -1
+        lastBlock = -1
+        lastPar = -1
+        lastLine = -1
+        
+        for i in range(boxCounter):
+            #print(self._OCRWords['text'][i], self._OCRWords['page_num'][i], self._OCRWords['block_num'][i], self._OCRWords['par_num'][i], self._OCRWords['line_num'][i])
+            if (len(OCRWords['text'][i]) == 0) or OCRWords['text'][i].isspace():
+                #print('skip')
+                continue
+            if lastLine != -1:
+                if lastLine != -1 and \
+                ((lastPage != OCRWords['page_num'][i]) or \
+                (lastBlock != OCRWords['block_num'][i]) or \
+                (lastPar != OCRWords['par_num'][i]) or \
+                (lastLine != OCRWords['line_num'][i])):
+                    self._OCRText += '\n'
+                else:
+                    self._OCRText += ' '
+            self._OCRText += OCRWords['text'][i]
+            if not self._hideGui:
+                self._OCRWordList.append([OCRWords['text'][i],
+                  round(OCRWords['height'][i] / 3 * 0.78,0), # calculated fontsize
+                  self._getColorString(OCRWords, i, img), # guess color
+                  'text', # guess object type
+                  int(OCRWords['width'][i] / 2 + OCRWords['left'][i]), # x
+                  int(OCRWords['height'][i] / 2 + OCRWords['top'][i]), # y
+                  int(OCRWords['conf'][i])]) # confidence
+
+            lastPage = OCRWords['page_num'][i]
+            lastBlock = OCRWords['block_num'][i]
+            lastPar = OCRWords['par_num'][i]
+            lastLine = OCRWords['line_num'][i]
+
+        #if os.path.exists("/usr/share/tesseract-ocr/4.00/tessdata/"):
+        #    tesseractData = "/usr/share/tesseract-ocr/4.00/tessdata/"
+        #elif os.path.exists("/usr/share/tesseract-ocr/tessdata/"):
+        #    tesseractData = "/usr/share/tesseract-ocr/tessdata/"
+        #elif os.path.exists("/usr/share/tesseract/tessdata/"):
+        #    tesseractData = "/usr/share/tesseract/tessdata/"
+        #elif os.path.exists("/usr/share/tessdata/"):
+        #    tesseractData = "/usr/share/tessdata/"
+        #else:
+        #    tesseractData = "/usr/share/"
+        
         return True
 
     def add_accelerator(self, widget, accelerator, signal="activate"):
@@ -416,9 +431,6 @@ class OCRScreenReader(Gtk.Window):
         if self._debug:
             print("refresh")
         self._tree = None
-        self._OCRWords = None
-        self._OCRWordList = []
-        self._OCRText = ''
         self._scrolledWindowTree = None
         self._scrolledWindowText = None
         self._textbox = None
