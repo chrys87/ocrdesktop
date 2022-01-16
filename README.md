@@ -20,13 +20,13 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 
 # INSTALL
 
-## ARCH Linux stable
+## ArchLinux ocrdesktop stable
 $ pacman -S ocrdesktop
 
-## ARCH Linux git 
+## ArchLinux ocrdesktop git 
 $ yay -S ocrdesktop-git
 
-## Just the Depencys:
+## ArchLinux dependencies only:
 $ yay -S python tesseract tesseract-data-deu tesseract-data-eng python-pillow python-atspi libwnck3 gtk3 python-webcolors python-scipy python-pytesseract python-pdf2image
 
 
