@@ -21,7 +21,7 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 # INSTALL
 
 ## ArchLinux ocrdesktop stable
-$ pacman -S ocrdesktop
+$ yay -S ocrdesktop
 
 ## ArchLinux ocrdesktop git 
 $ yay -S ocrdesktop-git
