@@ -20,7 +20,7 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 
 # INSTALL
 
-##ARCH Linux stable
+## ARCH Linux stable
 $ pacman -S ocrdesktop
 
 ## ARCH Linux git 
