@@ -1053,7 +1053,7 @@ class OCRScreenReader(Gtk.Window):
                     self._printHelp()
 
     def _printHelp(self):
-        print(__version__)
+        print('Version {}'.format(__version__))
         print("ocrdesktop -h -l <lang> -n -d -c -C -o -O -x <Value> -v -i -g -b -t <Value> -f <File> -m <MacroFile>")
         print("-h               Print help with start")
         print("-l <lang>        set the OCR language default=eng")
