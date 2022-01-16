@@ -18,13 +18,15 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 - python-webcolors (for color detection)
 - python-pdf2image (for pdf support)
 
-# INSTALL 
-ARCH Linux stable
-$ yay -S ocrdesktop
-ARCH Linux git
+# INSTALL
+
+##ARCH Linux stable
+$ pacman -S ocrdesktop
+
+## ARCH Linux git 
 $ yay -S ocrdesktop-git
 
-Just the Depencys:
+## Just the Depencys:
 $ yay -S python tesseract tesseract-data-deu tesseract-data-eng python-pillow python-atspi libwnck3 gtk3 python-webcolors python-scipy python-pytesseract python-pdf2image
 
 
