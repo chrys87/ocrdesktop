@@ -3,6 +3,10 @@ Features ready for implementation:
 - Make settings (like fontsize) saveable in gsettings or flatfile
   See http://www.micahcarrick.com/gsettings-python-gnome-3.html
 - Make it translateable _("bla")
+- multiprocessing for Multipage PDFs
+- Loading Bar
+- setup.py
+- split OCRdesktop into several files
 
 Needs experimenting or info
 
