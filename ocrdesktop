@@ -48,19 +48,23 @@ try:
 except:
     webColorsAvailable = False
     
-#gi
-import gi
+    
+UIAvailable = True
+try:
+    #gi
+    import gi
 
-#GTK/GDK/Wnck/GObject
-gi.require_version("Gtk", "3.0")
-gi.require_version("Gdk", "3.0")
-gi.require_version("Wnck", "3.0")
-from gi.repository import Gtk, Gdk, GObject, Wnck
+    #GTK/GDK/Wnck/GObject
+    gi.require_version("Gtk", "3.0")
+    gi.require_version("Gdk", "3.0")
+    gi.require_version("Wnck", "3.0")
+    from gi.repository import Gtk, Gdk, GObject, Wnck
 
-# AT-SPI
-gi.require_version('Atspi', '2.0')
-import pyatspi
-
+    # AT-SPI
+    gi.require_version('Atspi', '2.0')
+    import pyatspi
+except:
+    UIAvailable = False
 
 
 # here the class
@@ -227,6 +231,11 @@ class OCRScreenReader(Gtk.Window):
 
     def _screenShot(self):
         Ok = False
+        global UIAvailable
+        if not UIAvailable:
+            if self._debug:
+                    print('GTK / GDK / GI or pyatspi is not available')
+            return Ok
         time.sleep(0.3)
         if self._screenShotMode == 0:
             try: #take care that we get a screenshot
@@ -352,6 +361,8 @@ class OCRScreenReader(Gtk.Window):
         return 'unknown'
 
     def _ocrAllImages(self):
+        if self._debug:
+            print('start OCR')
         self._modifiedImg = []
         self._OCRText = ''
         self._OCRWords = {}
@@ -362,6 +373,8 @@ class OCRScreenReader(Gtk.Window):
             OCRWords = self._ocrImage(modifiedImg)
             self.appendToOCRWords(OCRWords)
             self._processOCRWords(OCRWords, modifiedImg)
+        if self._debug:
+            print('OCR complete')
         self._cleanOCRText()
         if self._sendToClipboard:
             self._setTextToClipboard( self._OCRText)
@@ -926,15 +939,22 @@ class OCRScreenReader(Gtk.Window):
         self._setTextToClipboard(self._OCRText)
 
     def _setTextToClipboard(self, text_p):
+        global UIAvailable
+        if not UIAvailable:
+            if self._debug:
+                print('GTK / GDK / GI or pyatspi is not available')
+            return
+
         if self._debug:
             print("----_setTextToClipboard Start--")
             print(text_p)
             print("----_setTextToClipboard End----")
-            
-        ClipboardObj = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
-        ClipboardObj.set_text(text_p, -1)
-        ClipboardObj.store()
-
+        try:
+            ClipboardObj = Gtk.Clipboard.get(Gdk.SELECTION_CLIPBOARD)
+            ClipboardObj.set_text(text_p, -1)
+            ClipboardObj.store()
+        except:
+            pass
     def _getSelectedEntry(self):
         if not self._tree:
             return None
@@ -977,6 +997,12 @@ class OCRScreenReader(Gtk.Window):
 
         #FUNCTIONS
     def _setCommandLineOptions(self):
+        # set hideGui of GTK is not available
+        global UIAvailable
+        if not UIAvailable:
+            if self._debug:
+                print('GTK / GDK / GI or pyatspi is not available')
+            self._hideGui = True
         try:
             myopts, args = getopt.getopt(sys.argv[1:],"hl:vndocCOx:gibt:m:f:")
             ###############################
@@ -991,9 +1017,11 @@ class OCRScreenReader(Gtk.Window):
                     self._screenShotMode = 3
                     self._file = a
                 elif o == '-C':
-                    self._screenShotMode = 2
+                    if UIAvailable:
+                        self._screenShotMode = 2
                 elif o == '-d':
-                    self._screenShotMode = 1
+                    if UIAvailable:
+                        self._screenShotMode = 1
                 elif o == '-g':
                     self._grayscaleImg = True
                 elif o == '-i':
@@ -1004,11 +1032,13 @@ class OCRScreenReader(Gtk.Window):
                 elif o == '-t':
                     self._blackWhiteImgValue = int(a)
                 elif o == '-c':
-                    self._sendToClipboard = True
+                    if UIAvailable:
+                        self._sendToClipboard = True
                 elif o == '-l':
                     self._languageCode = a
                 elif o == '-m':
-                    self._macro._loadMcroFile(a)
+                    if UIAvailable:
+                        self._macro._loadMcroFile(a)
                 elif o == '-n':
                     self._hideGui = True
                 elif o == '-o':
