@@ -4,7 +4,7 @@ Accessiblity tool for use the current window with OCR technique
 # Here is the wiki:
 https://wiki.archlinux.org/index.php/Ocrdesktop
 
-# Depencys:
+# Depencyies:
 - python3
 - tesseract
 - tesseract-lang-<yourLanguageCode>
