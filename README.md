@@ -4,7 +4,7 @@ Accessiblity tool for use the current window with OCR technique
 # Here is the wiki:
 https://wiki.archlinux.org/index.php/Ocrdesktop
 
-# Depencys:
+# Depencies:
 - python3
 - tesseract
 - tesseract-lang-<yourLanguageCode>
@@ -18,13 +18,15 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 - python-webcolors (for color detection)
 - python-pdf2image (for pdf support)
 
-# INSTALL 
-ARCH Linux stable
+# INSTALL
+
+## ArchLinux ocrdesktop stable
 $ yay -S ocrdesktop
-ARCH Linux git
+
+## ArchLinux ocrdesktop git 
 $ yay -S ocrdesktop-git
 
-Just the Depencys:
+## ArchLinux dependencies only:
 $ yay -S python tesseract tesseract-data-deu tesseract-data-eng python-pillow python-atspi libwnck3 gtk3 python-webcolors python-scipy python-pytesseract python-pdf2image
 
 
