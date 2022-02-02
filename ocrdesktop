@@ -437,7 +437,7 @@ class OCRScreenReader(Gtk.Window):
                   'text', # guess object type
                   int(OCRWords['width'][i] / 2 + OCRWords['left'][i]), # x
                   int(OCRWords['height'][i] / 2 + OCRWords['top'][i]), # y
-                  int(float(OCRWords['conf'][i])])) # confidence
+                  int(float(OCRWords['conf'][i]))]) # confidence
 
             lastPage = OCRWords['page_num'][i]
             lastBlock = OCRWords['block_num'][i]
