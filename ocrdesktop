@@ -223,7 +223,7 @@ class OCRScreenReader(Gtk.Window):
         width_screen, height_screen = img.size
         width_screen = width_screen * self._scaleFactor
         height_screen = height_screen * self._scaleFactor
-        scaledImg = img.resize( (width_screen, height_screen), Image.BICUBIC)
+        scaledImg = img.resize( (width_screen, height_screen), Image.Resampling.BICUBIC)
         if self._debug: # Debug code
             scaledImg.save("/tmp/ocrScreenshotScaled.png")
             print("save scaled screenshot:/tmp/ocrScreenshotScaled.png")
