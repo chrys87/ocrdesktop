@@ -1,10 +1,10 @@
-# ocrdesktop
+  # ocrdesktop
 Accessiblity tool for use the current window with OCR technique 
 
 # Here is the wiki:
 https://wiki.archlinux.org/index.php/Ocrdesktop
 
-# Depencies:
+# Dependencies:
 - python3
 - tesseract
 - tesseract-lang-<yourLanguageCode>
@@ -13,7 +13,7 @@ https://wiki.archlinux.org/index.php/Ocrdesktop
 - python-pytesseract
 - libwnck3
 - GTK3
-# Optional Depencys
+# Optional Dependencies:
 - python-scipy (for color detection)
 - python-webcolors (for color detection)
 - python-pdf2image (for pdf support)
