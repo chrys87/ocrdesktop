@@ -1587,6 +1587,9 @@ KEY_CODE = {
     'þ':33,
     }
 
-if __name__ == "__main__":
+def main():
     Application = OCRScreenReader()
     Application.run()
+
+if __name__ == "__main__":
+    main()
