@@ -389,17 +389,18 @@ class OCRScreenReader(Gtk.Window):
             except KeyError:
                 self._OCRWords[k] = v
     def _cleanOCRText(self):
-        regexSpace = re.compile('[^\S\r\n]{2,}') #remove double spaces
+        self._OCRText=self._OCRText.replace("\r", "") # Clear out \r characters from line endings if necessary
+        regexSpace = re.compile('[ \t]{2,}') #remove double spaces
         self._OCRText = regexSpace.sub(' ',self._OCRText)
-        regexSpace = re.compile('\n\s*\n') #remove empty lines
+        regexSpace = re.compile('\n[ \t\n]*\n') #remove empty lines
         self._OCRText = regexSpace.sub('\n',self._OCRText)
-        regexSpace = re.compile('\s*\n') #remove ending spaces
+        regexSpace = re.compile('[ \t\n]*\n') #remove ending spaces
         self._OCRText = regexSpace.sub('\n',self._OCRText)
-        regexSpace = re.compile('^\s') #remove trailing space in first line
+        regexSpace = re.compile('^[ \t\n]') #remove trailing space in first line
         self._OCRText = regexSpace.sub( '\n', self._OCRText)
         regexSpace = re.compile('$\n') #remove ending newline
         self._OCRText = regexSpace.sub( '', self._OCRText)
-        regexSpace = re.compile('\n\s') #remove trailing spaces
+        regexSpace = re.compile('\n[ \t\n]') #remove trailing spaces
         self._OCRText = regexSpace.sub( '\n', self._OCRText)
         self._OCRText = self._OCRText[:-1]
 
